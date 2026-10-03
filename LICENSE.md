@@ -8,10 +8,6 @@ This is a commercial, proprietary software product. It is **not** open source an
 **not** distributed under the MIT or any other open-source license. By purchasing,
 downloading, installing, or using the Software you agree to the terms below.
 
-> ⚠️ This document is a starting template and **must be reviewed by a legal
-> professional** before public release. Placeholder terms (pricing, activation
-> limits, jurisdiction, refund policy) need to be finalized.
-
 ## 1. License Grant
 
 Subject to payment of the applicable fee and ongoing compliance with this

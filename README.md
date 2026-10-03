@@ -1,4 +1,4 @@
-<img class="filament-hidden" src="https://raw.githubusercontent.com/qalainau/filament-warp-table-docs/main/art/banner.jpg" alt="Warp Table">
+<img class="filament-hidden" src="https://raw.githubusercontent.com/qalainau-labs/filament-warp-table-docs/main/art/banner.jpg" alt="Warp Table">
 
 # Warp Table
 
@@ -53,11 +53,11 @@ On a real order-management table (grouped by file, with group subtotals), the na
 
 Inline editing, row selection and badges:
 
-![Inline editing and selection](https://raw.githubusercontent.com/qalainau/filament-warp-table-docs/main/art/inline-editing.png)
+![Inline editing and selection](https://raw.githubusercontent.com/qalainau-labs/filament-warp-table-docs/main/art/inline-editing.png)
 
 Collapsible groups with subtotals and a table summary:
 
-![Grouping and summaries](https://raw.githubusercontent.com/qalainau/filament-warp-table-docs/main/art/grouping-summaries.png)
+![Grouping and summaries](https://raw.githubusercontent.com/qalainau-labs/filament-warp-table-docs/main/art/grouping-summaries.png)
 
 ## Requirements
 
@@ -186,7 +186,7 @@ $table
 
 Multi-level rows are a Warp Table layout. When Warp Table is disabled or falls back to the native table (see *Automatic fallback*), the table is shown with one line per record.
 
-![Multi-level rows](https://raw.githubusercontent.com/qalainau/filament-warp-table-docs/main/art/multi-level-rows.png)
+![Multi-level rows](https://raw.githubusercontent.com/qalainau-labs/filament-warp-table-docs/main/art/multi-level-rows.png)
 
 ## Supported columns
 
