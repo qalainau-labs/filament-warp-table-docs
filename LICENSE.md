@@ -14,14 +14,23 @@ Subject to payment of the applicable fee and ongoing compliance with this
 Agreement, the licensor grants you a non-exclusive, non-transferable license to use
 the Software according to the license tier you purchased:
 
-- **Solo** — Use in **one (1)** project/application. Up to **two (2)** activations
-  (e.g. local + production) of that single project.
-- **Unlimited** — Use in an **unlimited** number of projects/applications that you
-  own or develop, with unlimited activations.
+- **Single Project** — Use in **one (1)** project that is not a SaaS application.
+  Up to **three (3)** activations of that project (e.g. local, staging/CI and
+  production). One (1) year of updates.
+- **Unlimited Projects** — Use in an **unlimited** number of projects, including
+  SaaS applications, with unlimited activations. One (1) year of updates.
+- **Lifetime** — Same as Unlimited Projects, with updates for as long as the
+  Software is maintained.
 
-A "project" means a single deployed application codebase. Each end product you sell,
-sublicense, or deploy for a distinct client counts as a separate project under the
-Solo tier.
+A "project" means a single application codebase. Each end product you sell,
+sublicense, or deploy for a distinct client counts as a separate project.
+
+A "SaaS application" means an application that serves multiple customers or
+organizations under a subscription or similar arrangement. Using the Software in a
+SaaS application requires an Unlimited Projects or Lifetime license.
+
+An "activation" means an environment that installs the Software with your license
+key, identified by the fingerprint you add to the key.
 
 ## 2. Permitted Use
 
@@ -35,15 +44,19 @@ You may **not**:
 
 - Redistribute, resell, sublicense, publish, or share the Software's source code or
   assets as a standalone product or template, in whole or in part.
+- Publish the Software's source code in a public repository, including as part of an
+  open-source application.
 - Remove or alter copyright, license, or attribution notices.
-- Use the Software beyond the project/activation limits of your purchased tier.
+- Use the Software beyond the project, SaaS or activation limits of your purchased tier.
 - Share your license key or private Composer credentials with third parties.
 
-## 4. Updates and Support
+## 4. Updates and Renewal
 
-- License purchase includes updates for the period stated at time of purchase
-  (e.g. one (1) year). After that period, purchased versions remain usable, and
-  updates may require a renewal.
+- Single Project and Unlimited Projects licenses include updates for one (1) year
+  from the date of purchase.
+- When the update period ends, you keep the right to use, and to install, every
+  version released before it ended. Newer versions require a renewal.
+- Renewals are offered at a discounted price.
 - Support scope is defined on the product's sales page.
 
 ## 5. Ownership
@@ -70,5 +83,4 @@ must cease all use and destroy all copies of the Software.
 
 ---
 
-For licensing questions, use the contact details on the product's Anystack page or open an issue in the
-private repository you get access to after purchase.
+For licensing questions, use the contact details on the product's Anystack page.

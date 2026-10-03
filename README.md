@@ -75,8 +75,10 @@ Add the repository and authenticate:
 
 ```bash
 composer config repositories.warp-table composer https://<your-anystack-repository-url>
-composer config http-basic.<your-anystack-repository-host> "your-email" "your-license-key"
+composer config http-basic.<your-anystack-repository-host> "your-email" "your-license-key:your-fingerprint"
 ```
+
+The password is your license key followed by a colon and a fingerprint that names the environment, such as `example.com` for production or `local` for your machine. Each fingerprint counts as one activation: a Single Project license allows three (for example local, staging/CI and production).
 
 Install the package and publish Filament's assets:
 
