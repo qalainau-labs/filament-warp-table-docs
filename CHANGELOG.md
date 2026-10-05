@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-06
+
 ### Changed
 
 - Installing needs only your email and license key. The fingerprint suffix on the Composer password and the activation limit of the Single Project license are gone; a Single Project license covers all environments of its one project.
+
+### Fixed
+
+- Turning the mouse wheel over the table now scrolls the page, or the modal or slide-over the table is in. The rows area kept the wheel to itself, so the page only scrolled while the pointer was outside the table. Tables with `warpHeight()` still scroll inside the table.
 
 ## [1.1.0] - 2026-10-05
 
