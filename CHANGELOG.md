@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-05
+
+### Added
+
+- `->warpStickyHeader()` keeps the header row below the panel's topbar while the page scrolls, until the last
+  record scrolls past. Inside a modal or slide-over it sticks to the top of the modal's scrolling area, below a
+  sticky modal header. Keyboard focus scrolls so the focused record is not hidden behind the header.
+
+### Changed
+
+- The canvas is no longer redrawn on every animation frame while the page is idle. Scrolling draws a frame about
+  three times faster, and the select-all checkbox state is computed once per selection change instead of once
+  per frame.
+
+### Fixed
+
+- Every Livewire update (sorting, searching, saving a cell) rebuilt the table. The open inline editor was
+  closed, so Enter no longer moved to the next record and validation errors were not shown, and the page
+  could jump back to the top. The table now carries the canvas, the editor, its focus and the scroll position
+  over to the updated markup.
+- Action group dropdowns near the bottom of the screen opened downwards off screen when the top of the table
+  was still visible.
+- Rows were drawn over a modal's sticky footer.
+- Column `extraAttributes()`, `extraCellAttributes()`, `extraInputAttributes()` and `extraImgAttributes()` are
+  now honored like in the native table. Their classes and styles are used when measuring column widths
+  (for example `['style' => 'min-width: 6rem']`), and their effect on the cell is drawn on the canvas:
+  background, padding, text color, weight, italics, text decoration, alignment and opacity. Input attributes
+  such as `maxlength` are applied to the inline editor.
+- Text color, weight and opacity that application CSS assigns to `->recordClasses()` are drawn, not only the
+  background.
+- Images that are neither circular nor square are drawn without rounded corners, like the native table.
+
 ## [1.0.0] - 2026-10-03
 
 ### Added

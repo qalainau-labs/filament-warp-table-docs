@@ -2,7 +2,7 @@
 
 # Warp Table
 
-**Fast Filament tables for large pages: the rows are drawn on a `<canvas>`, with optional ledger-style multi-level rows, while everything else behaves exactly like the native table.**
+**Fast Filament tables for large pages: the rows are drawn on a `<canvas>`, with a sticky header and ledger-style multi-level rows that the native table does not have, while everything else behaves exactly like the native table.**
 
 Filament tables slow down once a page holds several hundred rows, and much more so when those rows contain inline-editable columns (`TextInputColumn`, `SelectColumn`, `ToggleColumn`, `CheckboxColumn`). Every cell becomes Blade output and Alpine components, and the browser has to build and lay out tens of thousands of DOM nodes.
 
@@ -41,15 +41,20 @@ On a real order-management table (grouped by file, with group subtotals), the na
   - Loading states: checkboxes are disabled and the sort indicator spins while Livewire is busy.
   - Column widths are measured by the browser with the same markup, so columns line up with the native table to the pixel.
   - Browser find (Cmd/Ctrl+F) finds text in every row, including rows that are off screen.
+- **Sticky header**: `->warpStickyHeader()` keeps the header row on screen while the page scrolls, so you always know which column you are looking at, even 600 rows down. The native table cannot do this, because its scrolling container stops CSS `position: sticky` from working. It also works inside modals and slide-overs.
 - **Grouping**: collapsible groups, HTML group titles, group descriptions and group selection.
 - **Summaries**: group subtotals, page summary and table summary, using Filament's summarizers.
-- **Multi-level rows**: show each record on several lines, ledger style, with a multi-level header.
+- **Multi-level rows**: show each record on several lines, ledger style, with a multi-level header. The native table has no equivalent either.
 - **Inline editing**: text inputs and selects are edited in place, and toggles and checkboxes are toggled in place. Validation errors are shown inline, exactly as your column rules return them.
 - **Actions**: record actions, action groups (dropdowns), URL actions, modals and confirmations, all using Filament's own action pipeline.
 - **Theme aware**: colors, fonts and spacing are read from Filament's CSS at runtime, so custom themes and dark mode work without configuration.
 - **Automatic fallback**: in states the canvas does not draw (see below), the regular Filament table is rendered with no change on your side.
 
 ## Screenshots
+
+A sticky header that stays below the panel's topbar, 640 rows down a 1,000-row page:
+
+![Sticky header](https://raw.githubusercontent.com/qalainau-labs/filament-warp-table-docs/main/art/sticky-header.png)
 
 Inline editing, row selection and badges:
 
@@ -144,13 +149,14 @@ $table->warp(fn (): bool => auth()->user()->prefersFastTables());
 ```php
 $table
     ->warp()
+    ->warpStickyHeader()          // keep the header row on screen while the page scrolls (default: off)
     ->warpHeight('70vh')          // scroll inside the table with a sticky header (default: scroll with the page)
     ->warpRowHeight(56)           // fixed row height in px (default: computed from the content, like the native table)
     ->warpMeasureSampleSize(300)  // rows measured for column widths, plus the widest rows further down (default: 300)
     ->warpMultiLevel(columns: 6, rows: 2); // several lines per record (see "Multi-level rows")
 ```
 
-By default the table scrolls with the page, exactly like the native table. `warpHeight()` switches to a fixed-height scroll area with a sticky header row. This is useful for dashboards or very long pages.
+By default the table scrolls with the page, exactly like the native table. `warpStickyHeader()` keeps the page scroll but pins the header row below the panel's topbar until the last record scrolls past, so long tables stay readable. Inside a modal or slide-over, the header sticks to the top of the modal's scrolling area instead. The native table has no equivalent, because its scrolling container stops CSS `position: sticky` from working, so the option is off by default. `warpHeight()` switches to a fixed-height scroll area with a sticky header row. This is useful for dashboards or very long pages.
 
 ## Multi-level rows
 
@@ -204,7 +210,9 @@ Multi-level rows are a Warp Table layout. When Warp Table is disabled or falls b
 | `CheckboxColumn` | Standard checkbox. |
 | Anything else | The column's regular HTML is rendered as a DOM overlay for the rows currently on screen, for example `ViewColumn`, HTML or Markdown `TextColumn`, and third-party columns. |
 
-Row classes from `->recordClasses()` are supported. Background colors that your CSS assigns to those classes (for example `tr.is-overdue > td { background: … }`) are applied to the canvas rows.
+Row classes from `->recordClasses()` are supported. Background colors, text colors and opacity that your CSS assigns to those classes (for example `tr.is-overdue > td { background: … }`) are applied to the canvas rows.
+
+Column `extraAttributes()`, `extraCellAttributes()`, `extraInputAttributes()` and `extraImgAttributes()` work like in the native table. Their classes and styles count when the column widths are measured, so `->extraAttributes(['style' => 'min-width: 6rem'])` widens the column. Their effect on the cell is drawn on the canvas: background, padding, text color, weight, italics, text decoration, alignment and opacity. Other CSS, such as borders or shadows, is not drawn.
 
 ## Keyboard
 
