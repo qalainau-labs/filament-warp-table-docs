@@ -80,10 +80,10 @@ Add the repository and authenticate:
 
 ```bash
 composer config repositories.warp-table composer https://filament-warp-table.composer.sh
-composer config http-basic.filament-warp-table.composer.sh "your-email" "your-license-key:your-fingerprint"
+composer config http-basic.filament-warp-table.composer.sh "your-email" "your-license-key"
 ```
 
-The password is your license key followed by a colon and a fingerprint that names the environment, such as `example.com` for production or `local` for your machine. Each fingerprint counts as one activation: a Single Project license allows three (for example local, staging/CI and production).
+The username is the email address on your license and the password is your license key. Use the same credentials on every machine and server that installs the package, such as your laptop, CI and production.
 
 Install the package and publish Filament's assets:
 

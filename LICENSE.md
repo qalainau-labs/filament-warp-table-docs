@@ -14,11 +14,11 @@ Subject to payment of the applicable fee and ongoing compliance with this
 Agreement, the licensor grants you a non-exclusive, non-transferable license to use
 the Software according to the license tier you purchased:
 
-- **Single Project** — Use in **one (1)** project that is not a SaaS application.
-  Up to **three (3)** activations of that project (e.g. local, staging/CI and
-  production). One (1) year of updates.
+- **Single Project** — Use in **one (1)** project that is not a SaaS application,
+  in all of that project's environments (e.g. local, staging/CI and production).
+  One (1) year of updates.
 - **Unlimited Projects** — Use in an **unlimited** number of projects, including
-  SaaS applications, with unlimited activations. One (1) year of updates.
+  SaaS applications. One (1) year of updates.
 - **Lifetime** — Same as Unlimited Projects, with updates for as long as the
   Software is maintained.
 
@@ -28,9 +28,6 @@ sublicense, or deploy for a distinct client counts as a separate project.
 A "SaaS application" means an application that serves multiple customers or
 organizations under a subscription or similar arrangement. Using the Software in a
 SaaS application requires an Unlimited Projects or Lifetime license.
-
-An "activation" means an environment that installs the Software with your license
-key, identified by the fingerprint you add to the key.
 
 ## 2. Permitted Use
 
@@ -47,7 +44,7 @@ You may **not**:
 - Publish the Software's source code in a public repository, including as part of an
   open-source application.
 - Remove or alter copyright, license, or attribution notices.
-- Use the Software beyond the project, SaaS or activation limits of your purchased tier.
+- Use the Software beyond the project or SaaS limits of your purchased tier.
 - Share your license key or private Composer credentials with third parties.
 
 ## 4. Updates and Renewal

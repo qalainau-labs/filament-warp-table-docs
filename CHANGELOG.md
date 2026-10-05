@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Installing needs only your email and license key. The fingerprint suffix on the Composer password and the activation limit of the Single Project license are gone; a Single Project license covers all environments of its one project.
+
 ## [1.1.0] - 2026-10-05
 
 ### Added
