@@ -35,14 +35,17 @@ On a real order-management table (grouped by file, with group subtotals), the na
 - **Drop-in**: one method, same `Table` definition, same columns, filters, actions and pagination.
 - **Behaves like the native table**, verified side by side against Filament's own table:
   - Row links are real links: Cmd/Ctrl-click and middle-click open a new tab, the context menu works, and the URL shows in the status bar.
+  - Cell clicks follow the native rules: a column `url()` makes the whole cell a link, a column `action()` runs instead of the row's URL, and `disabledClick()` turns the cell off.
   - Selection, "select all", Shift-click range selection, group checkboxes and bulk actions go through Filament's own selection store.
   - Keyboard: the Tab order, focus rings and Enter / Space behavior match the native table.
   - Page scrolling: the table scrolls with the page, and paging scrolls back to the top of the table.
   - Loading states: checkboxes are disabled and the sort indicator spins while Livewire is busy.
-  - Column widths are measured by the browser with the same markup, so columns line up with the native table to the pixel.
+  - Column widths are measured by the browser with the same markup, so columns line up with the native table to the pixel, at every screen width.
+  - Phones and tablets: columns hidden with `visibleFrom()` / `hiddenFrom()` follow the screen width, touch scrolling and taps work, and `stackedOnMobile()` tables use Filament's stacked layout on narrow screens.
   - Browser find (Cmd/Ctrl+F) finds text in every row, including rows that are off screen.
 - **Sticky header**: `->warpStickyHeader()` keeps the header row on screen while the page scrolls, so you always know which column you are looking at, even 600 rows down. The native table cannot do this, because its scrolling container stops CSS `position: sticky` from working. It also works inside modals and slide-overs.
 - **Grouping**: collapsible groups, HTML group titles, group descriptions and group selection.
+- **Column groups**: `ColumnGroup` labels above the column headers, with the same dividers as the native table.
 - **Summaries**: group subtotals, page summary and table summary, using Filament's summarizers.
 - **Multi-level rows**: show each record on several lines, ledger style, with a multi-level header. The native table has no equivalent either.
 - **Inline editing**: text inputs and selects are edited in place, and toggles and checkboxes are toggled in place. Validation errors are shown inline, exactly as your column rules return them.
@@ -200,12 +203,12 @@ Multi-level rows are a Warp Table layout. When Warp Table is disabled or falls b
 
 | Column | Rendering |
 | --- | --- |
-| `TextColumn` | Text, lists, badges, colors, icons, weight, font family and size, descriptions, `wrap()`, `limitList()`, `copyable()`, `url()`, placeholders. |
-| `IconColumn` | Icons, `boolean()`, colors, line breaks. |
-| `ImageColumn` | Images (lazy-loaded), circular or square, stacked, limit with a remaining count. |
-| `ColorColumn` | Swatches, copyable. |
-| `TextInputColumn` | Drawn on the canvas, edited in a real `<input>`. Prefix and suffix labels, validation errors. |
-| `SelectColumn` | Drawn on the canvas, edited in a real `<select>`. Grouped options are supported. |
+| `TextColumn` | Text, lists, badges, colors, icons, weight, font family and size, descriptions, `wrap()`, `limitList()`, `copyable()`, `url()`, `action()`, placeholders. `numeric()` and `money()` use tabular figures. |
+| `IconColumn` | Icons, `boolean()`, colors, line breaks, `url()`. |
+| `ImageColumn` | Images (lazy-loaded), circular or square, stacked, limit with a remaining count, `url()`. |
+| `ColorColumn` | Swatches, copyable, `url()`. |
+| `TextInputColumn` | Drawn on the canvas, edited in a real `<input>`. Prefix and suffix labels and icons (with their colors), inline prefixes and suffixes, `mask()`, validation errors. |
+| `SelectColumn` | Drawn on the canvas. A native select is edited in a real `<select>` (grouped options are supported). `native(false)` and `searchableOptions()` columns open Filament's own select, with search, server-side search results and relationships. |
 | `ToggleColumn` | On/off colors and icons. |
 | `CheckboxColumn` | Standard checkbox. |
 | Anything else | The column's regular HTML is rendered as a DOM overlay for the rows currently on screen, for example `ViewColumn`, HTML or Markdown `TextColumn`, and third-party columns. |
@@ -216,7 +219,7 @@ Column `extraAttributes()`, `extraCellAttributes()`, `extraInputAttributes()` an
 
 ## Keyboard
 
-The Tab order is the same as the native table: the page checkbox, then sortable headers, then per group the group checkbox and the collapse button, then per row the row checkbox, cell links, editable cells and actions. Tab leaves the table at either end.
+The Tab order is the same as the native table: the page checkbox, then sortable headers, then per group the group checkbox and the collapse button, then per row the row checkbox, cell links and cell buttons (column or row actions), editable cells and actions. Tab leaves the table at either end.
 
 - **Space**: toggles checkboxes and toggles.
 - **Enter**: follows links (Cmd/Ctrl+Enter opens a new tab) and activates buttons.
@@ -233,6 +236,7 @@ Warp Table only replaces the records area. In these states the regular Filament 
 - Reorder mode (while reordering with `->reorderable()`).
 - Groups-only tables (`->groupsOnly()`).
 - An empty result. Filament's empty state is shown with the header row, like the native table.
+- `->stackedOnMobile()` tables on screens narrower than `sm` (640px), where Filament stacks each record into a card. The browser reports the screen width, so resizing switches between the stacked native table and Warp Table without a reload. Tables without `stackedOnMobile()` stay on Warp Table on phones.
 
 ## Limitations
 

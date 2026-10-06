@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-06
+
+### Added
+
+- Column groups (`ColumnGroup`) get their header row with the group labels and the dividers of the grouped columns, as in the native table.
+- `native(false)` and `searchableOptions()` select columns look like Filament's own select and open it to edit: the search field, keyboard navigation, server-side search results and the clear button all work as in the native table.
+- Text input columns draw `prefixIcon()` and `suffixIcon()` (with their colors), `inlinePrefix()` / `inlineSuffix()`, and apply `mask()` while editing.
+- `stackedOnMobile()` tables use Filament's native stacked layout on screens narrower than `sm` and switch back to Warp Table when the screen gets wider, without a reload.
+
+### Fixed
+
+- Cells now follow the native rules for clicks. A column `url()` makes the whole cell a link for every column type (text and icon columns ignored URLs that do not depend on `$state`, image and color columns ignored them entirely), a column `action()` runs the column action instead of the row's URL, and `disabledClick()` stops the row's URL and action in that cell. Cells that run an action can be reached with Tab and run with Enter or Space, like the native buttons.
+- Links in text columns are underlined on hover, as in the native table.
+- Select columns whose value is not in the preloaded options (options searched on the server, relationships) showed the placeholder instead of the value's label.
+- The chevron of select columns uses the native size, position and color.
+- `numeric()` and `money()` columns use tabular figures like the native table, so digits line up in right-aligned columns.
+- `selectGroupsOnly()` no longer disables selection: rows and groups can be selected and only the "select all on this page" checkbox is hidden, as in the native table. The header keeps its native height when that checkbox is hidden.
+- Resizing the window across a breakpoint (for example from a desktop to a phone width) re-reads the paddings that Filament changes per breakpoint, so the checkbox and the first column stay where the native table puts them.
+- Rows line up with the native table in every browser: badge lines use the height the browser gives them, and in Firefox and Safari, which keep fractional row heights, the fractions carry over to the next row instead of adding up.
+- The table keeps its scroll position when Livewire updates it. Toggling, editing or running an action in a table scrolled to the right jumped back to the left edge, and a `warpHeight()` table jumped back to the first row. The native table keeps both positions.
+
 ## [1.1.1] - 2026-10-06
 
 ### Changed
