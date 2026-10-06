@@ -7,70 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.0] - 2026-10-06
-
-### Added
-
-- Column groups (`ColumnGroup`) get their header row with the group labels and the dividers of the grouped columns, as in the native table.
-- `native(false)` and `searchableOptions()` select columns look like Filament's own select and open it to edit: the search field, keyboard navigation, server-side search results and the clear button all work as in the native table.
-- Text input columns draw `prefixIcon()` and `suffixIcon()` (with their colors), `inlinePrefix()` / `inlineSuffix()`, and apply `mask()` while editing.
-- `stackedOnMobile()` tables use Filament's native stacked layout on screens narrower than `sm` and switch back to Warp Table when the screen gets wider, without a reload.
-
-### Fixed
-
-- Cells now follow the native rules for clicks. A column `url()` makes the whole cell a link for every column type (text and icon columns ignored URLs that do not depend on `$state`, image and color columns ignored them entirely), a column `action()` runs the column action instead of the row's URL, and `disabledClick()` stops the row's URL and action in that cell. Cells that run an action can be reached with Tab and run with Enter or Space, like the native buttons.
-- Links in text columns are underlined on hover, as in the native table.
-- Select columns whose value is not in the preloaded options (options searched on the server, relationships) showed the placeholder instead of the value's label.
-- The chevron of select columns uses the native size, position and color.
-- `numeric()` and `money()` columns use tabular figures like the native table, so digits line up in right-aligned columns.
-- `selectGroupsOnly()` no longer disables selection: rows and groups can be selected and only the "select all on this page" checkbox is hidden, as in the native table. The header keeps its native height when that checkbox is hidden.
-- Resizing the window across a breakpoint (for example from a desktop to a phone width) re-reads the paddings that Filament changes per breakpoint, so the checkbox and the first column stay where the native table puts them.
-- Rows line up with the native table in every browser: badge lines use the height the browser gives them, and in Firefox and Safari, which keep fractional row heights, the fractions carry over to the next row instead of adding up.
-- The table keeps its scroll position when Livewire updates it. Toggling, editing or running an action in a table scrolled to the right jumped back to the left edge, and a `warpHeight()` table jumped back to the first row. The native table keeps both positions.
-
-## [1.1.1] - 2026-10-06
-
-### Changed
-
-- Installing needs only your email and license key. The fingerprint suffix on the Composer password and the activation limit of the Single Project license are gone; a Single Project license covers all environments of its one project.
-
-### Fixed
-
-- Turning the mouse wheel over the table now scrolls the page, or the modal or slide-over the table is in. The rows area kept the wheel to itself, so the page only scrolled while the pointer was outside the table. Tables with `warpHeight()` still scroll inside the table.
-
-## [1.1.0] - 2026-10-05
-
-### Added
-
-- `->warpStickyHeader()` keeps the header row below the panel's topbar while the page scrolls, until the last
-  record scrolls past. Inside a modal or slide-over it sticks to the top of the modal's scrolling area, below a
-  sticky modal header. Keyboard focus scrolls so the focused record is not hidden behind the header.
-
-### Changed
-
-- The canvas is no longer redrawn on every animation frame while the page is idle. Scrolling draws a frame about
-  three times faster, and the select-all checkbox state is computed once per selection change instead of once
-  per frame.
-
-### Fixed
-
-- Every Livewire update (sorting, searching, saving a cell) rebuilt the table. The open inline editor was
-  closed, so Enter no longer moved to the next record and validation errors were not shown, and the page
-  could jump back to the top. The table now carries the canvas, the editor, its focus and the scroll position
-  over to the updated markup.
-- Action group dropdowns near the bottom of the screen opened downwards off screen when the top of the table
-  was still visible.
-- Rows were drawn over a modal's sticky footer.
-- Column `extraAttributes()`, `extraCellAttributes()`, `extraInputAttributes()` and `extraImgAttributes()` are
-  now honored like in the native table. Their classes and styles are used when measuring column widths
-  (for example `['style' => 'min-width: 6rem']`), and their effect on the cell is drawn on the canvas:
-  background, padding, text color, weight, italics, text decoration, alignment and opacity. Input attributes
-  such as `maxlength` are applied to the inline editor.
-- Text color, weight and opacity that application CSS assigns to `->recordClasses()` are drawn, not only the
-  background.
-- Images that are neither circular nor square are drawn without rounded corners, like the native table.
-
-## [1.0.0] - 2026-10-03
+## [1.0.0] - 2026-10-06
 
 ### Added
 
@@ -78,41 +15,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   filters, pagination, bulk actions and modals stay Filament's own.
 - Canvas rendering for `TextColumn`, `IconColumn`, `ImageColumn`, `ColorColumn`, `TextInputColumn`,
   `SelectColumn`, `ToggleColumn` and `CheckboxColumn`; other columns are rendered as DOM overlays for
-  the rows on screen.
-- Inline editing through Filament's `updateTableColumnState`, with validation errors.
-- Grouping: collapsible groups, HTML group titles, descriptions and group selection.
-- Summaries: group subtotals, page summary and table summary. Summary rows hidden by application CSS
-  are hidden in the canvas too.
+  the rows on screen. HTML, Markdown and custom view columns use the native cell markup.
+- Inline editing through Filament's `updateTableColumnState`, with validation errors. Text inputs support
+  `prefix()` / `suffix()`, `prefixIcon()` / `suffixIcon()`, `inlinePrefix()` / `inlineSuffix()`, `mask()` and
+  input attributes such as `maxlength`. `native(false)` and `searchableOptions()` select columns open
+  Filament's own select with search, keyboard navigation and server-side results.
+- Grouping (collapsible groups, HTML group titles, descriptions, group selection, `selectGroupsOnly()`),
+  column groups (`ColumnGroup`) and summaries (group subtotals, page summary and table summary).
 - Multi-level rows (`->warpMultiLevel()`): each record spans several lines on a grid, with a
   multi-level header (`HeaderCell`). Columns are placed with `->warpCell()`.
-
-### Fixed
-
-- Closer match with the native table, found with side-by-side demos:
-  - Action colors default to `primary` (`gray` in dropdowns), button and badge actions use the `sm` size,
-    and rows with button actions are as tall as in the native table.
-  - The first and last cells get the native edge padding (`ps-6` / `pe-6` for action cells), and the
-    actions header follows the actions alignment.
-  - Text inputs draw `prefix()` / `suffix()` as separate sections, and disabled or saving inputs use the
-    native disabled colors. Long values are clipped like an `<input>`.
-  - Badges use the native letter spacing, limited lists show the translated "and N more", bulleted lists
-    use the native marker indent, and icons are separated from the text by a space and sized by the text size.
-  - Wrapped text and headers no longer break early because of sub-pixel differences or trailing spaces,
-    and line clamping puts the ellipsis at the end of the last line.
-  - Image columns use the native default sizes (2.5rem, 2rem when stacked, natural aspect ratio when
-    neither circular nor square).
-  - HTML, Markdown and custom view columns are rendered with the native cell markup, and all of them are
-    measured with that markup, so column widths match the native table.
-  - Column widths also consider the widest rows beyond the measurement sample.
-- `->recordClasses()`: background colors assigned to the classes by application CSS are drawn.
-- Native-table behavior parity:
-  - Page scrolling by default; `->warpHeight()` for a fixed-height scroll area with a sticky header.
-  - Row and URL-action links are real links (new tab with Cmd/Ctrl-click, middle-click, context menu).
-  - Shift-click range selection.
-  - Keyboard focus in the native Tab order with native-looking focus rings; Enter / Space activation.
-  - Loading states (disabled checkboxes, sort spinner) while Livewire is busy.
-  - Column widths measured by the browser from a hidden table with Filament's markup.
-  - Browser find (Cmd/Ctrl+F) across all rows, including rows that are off screen.
+- Page scrolling by default, `->warpHeight()` for a fixed-height scroll area, and `->warpStickyHeader()` to keep
+  the header row below the topbar (or the sticky modal header) while the page scrolls.
+- `stackedOnMobile()` tables use Filament's native stacked layout below the `sm` breakpoint and switch back
+  to Warp Table on wider screens without a reload.
+- Native-table behavior: row, column `url()` and URL-action links are real links (new tab with Cmd/Ctrl-click,
+  middle-click, context menu); column `action()` and `disabledClick()` follow the native click rules;
+  Shift-click range selection; the native Tab order and focus rings with Enter / Space activation; loading
+  states while Livewire is busy; browser find (Cmd/Ctrl+F) across all rows; scroll position, the open inline
+  editor and its focus are kept across Livewire updates; the mouse wheel over the table scrolls the page.
+- Column widths are measured by the browser from a hidden table with Filament's markup, including
+  `extraAttributes()`, `extraCellAttributes()`, `extraInputAttributes()` and `extraImgAttributes()`, so they
+  match the native table. Styles that application CSS assigns to `->recordClasses()` are drawn.
 - Automatic fallback to the native table for column layouts, reorder mode, groups-only tables and
   empty results.
-- Asset URLs include a hash of the file contents, so browsers never keep a stale build.
+- Installation with your email and license key through a private Composer repository.
