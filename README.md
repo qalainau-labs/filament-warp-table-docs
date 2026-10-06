@@ -82,8 +82,8 @@ Works in panels and in standalone Livewire components that use Filament's Table 
 Add the repository and authenticate:
 
 ```bash
-composer config repositories.warp-table composer https://filament-warp-table.composer.sh
-composer config http-basic.filament-warp-table.composer.sh "your-email" "your-license-key"
+composer config repositories.qalainau composer https://qalainau.privato.pub/composer
+composer config --auth http-basic.qalainau.privato.pub "your-email" "your-license-key"
 ```
 
 The username is the email address on your license and the password is your license key. Use the same credentials on every machine and server that installs the package, such as your laptop, CI and production.
@@ -272,7 +272,7 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 ## Support
 
-Open an issue in the private repository you get access to after purchase.
+Open an issue at https://github.com/qalainau-labs/filament-warp-table-docs/issues. Do not post your license key in the issue.
 
 ## License
 

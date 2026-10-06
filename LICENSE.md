@@ -80,4 +80,5 @@ must cease all use and destroy all copies of the Software.
 
 ---
 
-For licensing questions, use the contact details on the product's Anystack page.
+For licensing questions, open an issue at https://github.com/qalainau-labs/filament-warp-table-docs/issues.
+Do not post your license key or other private details in the issue.
