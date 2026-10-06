@@ -53,8 +53,8 @@ You may **not**:
   from the date of purchase.
 - When the update period ends, you keep the right to use, and to install, every
   version released before it ended. Newer versions require a renewal.
-- Renewals are offered at a discounted price.
-- Support scope is defined on the product's sales page.
+- Renewals are offered at the current price of the license tier.
+- Support is provided as described in the Support section of the README.
 
 ## 5. Ownership
 
