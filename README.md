@@ -4,6 +4,14 @@
 
 **Fast Filament tables for large pages: the rows are drawn on a `<canvas>`, with a sticky header and ledger-style multi-level rows that the native table does not have, while everything else behaves exactly like the native table.**
 
+<a href="https://filament-warp-table.webllsystem.com/"><img src="https://raw.githubusercontent.com/qalainau-labs/filament-warp-table-docs/main/art/live-demo.png" alt="Try the live demo: filament-warp-table.webllsystem.com" width="592"></a>
+
+Edit cells, sort, group, select and compare with the native table side by side at **[filament-warp-table.webllsystem.com](https://filament-warp-table.webllsystem.com/)**. No sign-up needed; the data is reset every hour.
+
+<a href="https://filament-warp-table.webllsystem.com/"><img src="https://raw.githubusercontent.com/qalainau-labs/filament-warp-table-docs/main/art/native-vs-warp.gif" alt="The same 1,000-row table loading as the native Filament table and as Warp Table"></a>
+
+*The same 1,000-row table with editable columns, loaded side by side from an empty cache: the native table on the left, Warp Table on the right (recorded on the demo's Speed Lab page).*
+
 Filament tables slow down once a page holds several hundred rows, and much more so when those rows contain inline-editable columns (`TextInputColumn`, `SelectColumn`, `ToggleColumn`, `CheckboxColumn`). Every cell becomes Blade output and Alpine components, and the browser has to build and lay out tens of thousands of DOM nodes.
 
 Warp Table keeps your existing `Table` definition. Add `->warp()` and the records area is drawn on a canvas. The header toolbar, filters, search, pagination, bulk actions, modals and notifications are still Filament's own. Only the cell you are editing becomes a real `<input>` / `<select>`.
