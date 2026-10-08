@@ -77,6 +77,14 @@ Collapsible groups with subtotals and a table summary:
 
 ![Grouping and summaries](https://raw.githubusercontent.com/qalainau-labs/filament-warp-table-docs/main/art/grouping-summaries.png)
 
+Frozen columns: ID and SKU stay at the left edge while the table scrolls sideways, with a sticky header:
+
+![Frozen columns](https://raw.githubusercontent.com/qalainau-labs/filament-warp-table-docs/main/art/frozen-columns.png)
+
+A range of cells selected by dragging, ready to copy into a spreadsheet:
+
+![Select and copy cells](https://raw.githubusercontent.com/qalainau-labs/filament-warp-table-docs/main/art/cell-selection.png)
+
 ## Requirements
 
 - PHP 8.3+
