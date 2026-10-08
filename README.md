@@ -52,6 +52,8 @@ On a real order-management table (grouped by file, with group subtotals), the na
   - Phones and tablets: columns hidden with `visibleFrom()` / `hiddenFrom()` follow the screen width, touch scrolling and taps work, and `stackedOnMobile()` tables use Filament's stacked layout on narrow screens.
   - Browser find (Cmd/Ctrl+F) finds text in every row, including rows that are off screen.
 - **Sticky header**: `->warpStickyHeader()` keeps the header row on screen while the page scrolls, so you always know which column you are looking at, even 600 rows down. The native table cannot do this, because its scrolling container stops CSS `position: sticky` from working. It also works inside modals and slide-overs.
+- **Frozen columns**: `->warpFrozenColumns(2)` keeps the first columns in view while a wide table scrolls sideways, like frozen columns in a spreadsheet. The native table has no equivalent.
+- **Select and copy cells**: `->warpCellSelection()` lets users drag across cells and copy them with Ctrl/Cmd+C, ready to paste into Excel or Google Sheets. The native table cannot copy a block of cells.
 - **Grouping**: collapsible groups, HTML group titles, group descriptions and group selection.
 - **Column groups**: `ColumnGroup` labels above the column headers, with the same dividers as the native table.
 - **Summaries**: group subtotals, page summary and table summary, using Filament's summarizers.
@@ -161,6 +163,8 @@ $table->warp(fn (): bool => auth()->user()->prefersFastTables());
 $table
     ->warp()
     ->warpStickyHeader()          // keep the header row on screen while the page scrolls (default: off)
+    ->warpFrozenColumns(2)        // keep the first 2 columns in view while the table scrolls sideways (default: 0)
+    ->warpCellSelection()         // select cells by dragging and copy them as a spreadsheet range (default: off)
     ->warpHeight('70vh')          // scroll inside the table with a sticky header (default: scroll with the page)
     ->warpRowHeight(56)           // fixed row height in px (default: computed from the content, like the native table)
     ->warpMeasureSampleSize(300)  // rows measured for column widths, plus the widest rows further down (default: 300)
@@ -168,6 +172,49 @@ $table
 ```
 
 By default the table scrolls with the page, exactly like the native table. `warpStickyHeader()` keeps the page scroll but pins the header row below the panel's topbar until the last record scrolls past, so long tables stay readable. Inside a modal or slide-over, the header sticks to the top of the modal's scrolling area instead. The native table has no equivalent, because its scrolling container stops CSS `position: sticky` from working, so the option is off by default. `warpHeight()` switches to a fixed-height scroll area with a sticky header row. This is useful for dashboards or very long pages.
+
+## Frozen columns
+
+A table with many columns scrolls sideways when it is wider than the page, and the columns that tell you which record you are looking at scroll away with the rest. `warpFrozenColumns()` keeps the first columns in view, like frozen columns in a spreadsheet:
+
+```php
+$table
+    ->warp()
+    ->warpFrozenColumns(2); // the first two columns stay at the left edge
+```
+
+- The count is the number of your columns, in the order they are shown. The selection checkboxes and record actions placed before them (`recordActionsPosition(RecordActionsPosition::BeforeColumns)`) are frozen with them.
+- A thin shadow marks the edge while the table is scrolled sideways. The header row, group headers, group checkboxes and summary rows stay aligned with the frozen columns, and group titles and their collapse buttons stay in view.
+- Clicking, links, inline editing and the dropdowns work in the frozen columns as usual. Tab and Shift+Tab scroll the table sideways to the focused cell, so a field never ends up hidden under the frozen columns.
+- Works together with `warpStickyHeader()` and `warpHeight()`.
+- Nothing is frozen when the table fits the page, when the frozen columns would take more than two thirds of the visible width (on small screens), and for multi-level rows. It accepts a closure too.
+
+The native table has no equivalent, so when Warp Table falls back to the native table (see *Automatic fallback*), the columns simply scroll.
+
+## Selecting and copying cells
+
+Rows on a canvas cannot be selected like text, and even in the native table, selecting text across rows copies a jumble of labels instead of cells. `warpCellSelection()` makes the records area work like a spreadsheet range instead:
+
+```php
+$table
+    ->warp()
+    ->warpCellSelection();
+```
+
+| Action | Result |
+| --- | --- |
+| Drag across cells | Selects the range. The page and the table scroll when you drag to an edge. |
+| Click a cell that does nothing on click | Selects that cell. |
+| Shift+click, Shift+arrow keys | Extend the range. |
+| Arrow keys | Move the selected cell. |
+| Ctrl/Cmd+A | Select every cell of the page (while the table has focus). |
+| Ctrl/Cmd+C, or Copy in the browser menu | Copy the range as tab-separated text and as an HTML table, ready to paste into Excel, Numbers or Google Sheets. |
+| Escape, or a click outside the table | Clear the range. |
+
+- Clicks keep working as usual: a click without moving the mouse still follows links, opens inline editors, copies `copyable()` text and runs column actions. Only a drag to another cell selects instead, so it never opens a record by accident. Checkboxes, toggles, sort buttons and record actions never start a range.
+- Cells are copied as they are shown: the text of text columns (without descriptions), the value of text inputs, the label of select options, `TRUE` / `FALSE` for toggles and checkboxes, the tooltip of icons, the URL of images, the color of color columns and the text of other columns. Rows of collapsed groups are skipped.
+- The range is kept across Livewire updates, for example after editing a cell, as long as its records are still on the page. It works with `warpFrozenColumns()`, `warpStickyHeader()` and `warpHeight()`.
+- While the option is on, links in the rows can no longer be dragged to the browser's tab bar, because dragging selects cells. It is not available for multi-level rows.
 
 ## Multi-level rows
 

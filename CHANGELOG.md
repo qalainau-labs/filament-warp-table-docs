@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-08
+
+### Added
+
+- Frozen columns (`->warpFrozenColumns()`): the first columns stay at the left edge while a wide table scrolls
+  sideways, with the header, group headers and summary rows aligned to them.
+- Cell selection (`->warpCellSelection()`): drag across cells, extend with Shift+click or Shift+arrow keys, and copy the
+  range with Ctrl/Cmd+C as tab-separated text and an HTML table for spreadsheets.
+
+### Fixed
+
+- Tab and Shift+Tab scroll a wide table sideways to the focused cell, like the native table.
+- Keyboard focus on an inline text input or select shows only the field's own focus ring, without a second ring
+  around the cell.
+- Keyboard focus on checkboxes and toggles is drawn around the control itself, in the native colors (`primary-600`
+  for unchecked checkboxes and toggles, lighter for checked checkboxes, `primary-500` in dark mode).
+- `ToggleColumn` icons use the `offColor()` / `onColor()` icon color, like the native toggle (the "off" icon was gray).
+
 ## [1.0.0] - 2026-10-06
 
 ### Added
