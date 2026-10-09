@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-09
+
+### Fixed
+
+- The sticky header (`->warpStickyHeader()`) no longer jitters while the page scrolls fast. While it is pinned, the
+  header is drawn on its own `position: fixed` canvas, which the browser keeps in place during scrolling, instead of
+  being moved after each scroll event. Inside modals and slide-overs it is drawn as before.
+- Tab and Shift+Tab with the dropdown of a `native(false)` / searchable `SelectColumn` open close it and move to the
+  next or previous field in the row, like the native table, instead of leaving the table.
+- After Enter moves the inline editor to the next row, Tab continues from that row instead of the one above.
+
 ## [1.1.0] - 2026-10-08
 
 ### Added
