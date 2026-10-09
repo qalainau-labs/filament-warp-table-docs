@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-10-09
+
+### Fixed
+
+- Fast page scrolling no longer shows an empty band at the top or bottom edge of the table for a moment. The canvas
+  is now drawn 400px beyond the visible area above and below, so the rows are already there when the browser scrolls
+  ahead of the next redraw.
+
 ## [1.1.1] - 2026-10-09
 
 ### Fixed
