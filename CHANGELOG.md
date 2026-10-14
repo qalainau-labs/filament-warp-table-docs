@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-10-14
+
+### Fixed
+
+- On a slow first visit, when Filament's font finished loading after the table was first drawn, column widths and
+  truncated text kept the fallback font's measurements (Inter is 2-3% wider), so text could run past its cell. The
+  table now measures again and redraws once the font has loaded.
+- The loading indicator no longer ends while another request to the same component is still running.
+- Image cells redraw when an image fails to load, and SVG images without a width and height are drawn at the size of
+  their box, as an `<img>` does.
+
 ## [1.1.2] - 2026-10-09
 
 ### Fixed
