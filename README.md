@@ -221,7 +221,7 @@ $table
 
 - Clicks keep working as usual: a click without moving the mouse still follows links, opens inline editors, copies `copyable()` text and runs column actions. Only a drag to another cell selects instead, so it never opens a record by accident. Checkboxes, toggles, sort buttons and record actions never start a range.
 - Cells are copied as they are shown: the text of text columns (without descriptions), the value of text inputs, the label of select options, `TRUE` / `FALSE` for toggles and checkboxes, the tooltip of icons, the URL of images, the color of color columns and the text of other columns. Rows of collapsed groups are skipped.
-- The range is kept across Livewire updates, for example after editing a cell, as long as its records are still on the page. It works with `warpFrozenColumns()`, `warpStickyHeader()` and `warpHeight()`.
+- The range is kept across Livewire updates, for example after editing a cell or hiding another column, as long as its records and columns are still on the page. It works with `warpFrozenColumns()`, `warpStickyHeader()` and `warpHeight()`.
 - While the option is on, links in the rows can no longer be dragged to the browser's tab bar, because dragging selects cells. It is not available for multi-level rows.
 
 ## Multi-level rows
@@ -289,7 +289,20 @@ The Tab order is the same as the native table: the page checkbox, then sortable 
 - **While editing a cell**:
   - Enter saves and moves down; Shift+Enter moves up.
   - Tab / Shift+Tab save and move to the next or previous focus target.
-  - Esc cancels.
+  - Esc cancels and clears the cell's validation error.
+- The focus stays on the same record and column when the table updates, for example after a save, a re-sort or a
+  filter, so Space and Enter never act on the record that moved into its old place. When the record or the column
+  leaves the page, the focus is cleared.
+
+### Saving cells
+
+- The cell shows what the server returns after the save, never the value you sent. If a model event cancels the save
+  (`saving` / `updating` returning `false`), a mutator changes the value or `updateStateUsing()` stores something
+  else, the table shows the stored value, and the other columns, summaries and the sort order are redrawn too.
+- While a toggle or checkbox is saving, more clicks on it are ignored until the save has finished.
+- A validation error stays on its cell, also after other updates of the table, until the cell is saved again or the
+  edit is cancelled with Esc. If you open another cell while a save is still running, a failed save does not take
+  you back or discard what you are typing; the error is shown on the failed cell.
 
 ## Automatic fallback
 

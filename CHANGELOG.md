@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.6] - 2026-10-20
+
+### Fixed
+
+- After saving a cell, the table always redraws from the server's response. Before, the saved value was also written
+  into the table in the browser, so a save that a model event cancelled (`saving` / `updating` returning `false`)
+  could keep showing the new value when the response was otherwise unchanged.
+- Clicking a toggle or checkbox again (or pressing Space) while it is still saving no longer sends the same value a
+  second time. The extra clicks are ignored until the save has finished.
+- The keyboard focus now follows its record and column when the table updates. Before, after a save, a re-sort or a
+  filter, the focus stayed at the same position, so Space or Enter could toggle or run an action on a different
+  record, or throw an error when the row was gone. When the record leaves the page, the focus is cleared.
+- The keyboard focus ring and Space / Enter keep working after a Livewire update. Before, the focus ring disappeared
+  after every update (for example after toggling with Space or sorting with Enter) and the next key press did nothing
+  until you pressed Tab.
+- A cell range selected with `warpCellSelection()` stays on its columns when another column is hidden or shown.
+  Before, it moved to the neighbouring columns, so Ctrl/Cmd+C copied the wrong columns.
+- When you open another cell while a save is still running, a failed save no longer closes the cell you are typing
+  in, and Enter no longer moves you away from it. After a re-sort, a failed cell reopens on its own record.
+- Validation errors stay on their cell across other updates of the table (for example `->poll()`), and a cell
+  reopened by an update keeps its cursor position. Esc clears the cell's error.
+- The validation error of a `native(false)` / searchable `SelectColumn` is shown on its record when the rows moved
+  while the dropdown was open.
+
 ## [1.1.5] - 2026-10-20
 
 ### Changed
