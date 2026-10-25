@@ -304,6 +304,22 @@ The Tab order is the same as the native table: the page checkbox, then sortable 
   edit is cancelled with Esc. If you open another cell while a save is still running, a failed save does not take
   you back or discard what you are typing; the error is shown on the failed cell.
 
+## Multi-tenancy
+
+Warp Table works in panels with [multi-tenancy](https://filamentphp.com/docs/5.x/users/tenancy) (`->tenant(Team::class)`) without any setup. It only draws the records that Filament has already loaded, and every action goes through Filament's own table methods, so the tenant scoping of your panel applies as usual:
+
+- **Rows, search, sorting, filters, groups and summaries** come from the table's query, the same query the native table uses.
+- **Inline editing** (`TextInputColumn`, `SelectColumn`, `ToggleColumn`, `CheckboxColumn`) saves through Filament's `updateTableColumnState()`, which looks the record up in the table's query. A record key of another tenant is not found, so nothing is saved.
+- **Bulk actions** get the selected records from the table's query, so they only see the records of the current tenant.
+- **Select column options** come from the column (`getOptions()`, and the searchable options from Filament's `callTableColumnMethod()`).
+
+Things to check in your own code:
+
+- Filament scopes a model to the tenant only when the panel has a resource for it. If a table on a custom page or widget uses a model without a resource, filter its `query()` by `Filament::getTenant()` yourself.
+- Options that you build yourself, for example `SelectColumn::make('supplier_id')->options(fn () => Supplier::pluck('name', 'id'))`, are scoped only when `Supplier` has a resource in the panel. Otherwise filter that query too.
+
+Panels without tenancy work as before.
+
 ## Automatic fallback
 
 Warp Table only replaces the records area. In these states the regular Filament table is rendered instead:

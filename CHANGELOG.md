@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.7] - 2026-10-25
+
+### Added
+
+- README: a "Multi-tenancy" section. Warp Table works with Filament's tenancy (`Panel::tenant()`) as it is: rows,
+  search, summaries, inline editing, bulk actions and select options only reach the records of the current tenant.
+  Tests with a real tenant panel.
+
+### Fixed
+
+- After a search, a filter or another update that came before the first click in the table, saving a cell, sorting
+  from the column headers and running row actions sent nothing to the server. The table now always talks to the
+  Livewire component of the current page.
+
 ## [1.1.6] - 2026-10-20
 
 ### Fixed
