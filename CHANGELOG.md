@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.15] - 2026-10-28
+
+### Fixed
+
+- A grouped table with summaries ran each summary query twice: the group summaries and the summary of all records (and
+  the page summary) were calculated once by Filament's table view, which also renders a summary table that Warp hides,
+  and again by Warp, which draws the summary rows itself. On large tables this could double the time to open the page.
+  Warp now leaves the summaries to itself, so each one runs once, like the native table (the queries are the same as
+  the native table's).
+
 ## [1.1.14] - 2026-10-28
 
 ### Fixed
