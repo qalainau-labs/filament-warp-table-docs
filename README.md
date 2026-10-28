@@ -280,6 +280,8 @@ Row classes from `->recordClasses()` are supported. Background colors, text colo
 
 Column `extraAttributes()`, `extraCellAttributes()`, `extraInputAttributes()` and `extraImgAttributes()` work like in the native table. Their classes and styles count when the column widths are measured, so `->extraAttributes(['style' => 'min-width: 6rem'])` widens the column. Their effect on the cell is drawn on the canvas: background, padding, text color, weight, italics, text decoration, alignment and opacity. Other CSS, such as borders or shadows, is not drawn.
 
+Columns with `searchable(isIndividual: true)` get Filament's own search field in a row under the column headers, as in the native table. Typing updates `tableColumnSearches` with the table's search debounce (or on blur with `searchOnBlur()`), the column widths make room for the fields, and the fields scroll sideways with their columns, follow the columns you show or hide, and stay under the header with `warpStickyHeader()` and `warpHeight()`.
+
 ## Keyboard
 
 The Tab order is the same as the native table: the page checkbox, then sortable headers, then per group the group checkbox and the collapse button, then per row the row checkbox, cell links and cell buttons (column or row actions), editable cells and actions. Tab leaves the table at either end.

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.13] - 2026-10-28
+
+### Added
+
+- Columns with `searchable(isIndividual: true)` now have their search field, as in the native table: a row under the
+  column headers with Filament's own search field for each of these columns (`wire:model.live.debounce` on
+  `tableColumnSearches.<column>`, with the table's debounce, or on blur with `searchOnBlur()`). The column widths include
+  the fields, so the table is as wide as the native one. The fields keep their focus and text while the table
+  updates, scroll sideways with their columns, follow the columns that are shown or hidden, and stay under the header
+  with `warpStickyHeader()` and inside `warpHeight()`. Until now the row was missing, so these columns could only be
+  searched from code, and the columns were narrower than in the native table.
+
 ## [1.1.12] - 2026-10-28
 
 ### Fixed
