@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.14] - 2026-10-28
+
+### Fixed
+
+- After a group was expanded or collapsed, the table area (`.fi-warp-tbl-stage`) of a table that fits on the screen
+  could stay 15px taller than its content, leaving a gap under the table. The height made room for a horizontal
+  scrollbar whenever one was there at the moment of measuring, even if it was only there for a moment. A table that
+  fits on the screen has no horizontal scrollbar, so its height is now always the height of its content.
+- After showing a column that comes before the visible ones (for example a column hidden by default), its search field
+  was added after the others in the page, so Tab moved through the column search fields out of the column order
+  (back to the left). The fields are now always in the column order, and a field you are typing in keeps its focus
+  and caret when they are reordered.
+
 ## [1.1.13] - 2026-10-28
 
 ### Added
