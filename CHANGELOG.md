@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.12] - 2026-10-28
+
+### Fixed
+
+- The header row was 1px lower than in the native table, so every row border below it was 1px higher. The native
+  table uses `border-collapse: collapse`, which draws the 1px line under the header outside the header cells: the
+  header background is 48px high with the line below it. The header now has the same height.
+- Text was drawn about 1px higher than in the native table (in the header, in plain text cells and in every other
+  cell). Text is now placed on the same baseline as the browser's: the font's ascent and descent (rounded) sit in the
+  line box with the half-leading rounded down, and the baseline is snapped to the device pixel.
+
 ## [1.1.11] - 2026-10-28
 
 ### Fixed
