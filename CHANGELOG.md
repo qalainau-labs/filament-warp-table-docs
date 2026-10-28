@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.10] - 2026-10-28
+
+### Fixed
+
+- A badge whose label is empty (for example `formatStateUsing()` returning `''` for some rows) was drawn as a small
+  square as tall as a badge with text. It is now drawn as in the native table: the label takes no height, so the badge
+  is a thin bar made of its padding (20×4px for `sm`, 24×8px for `md` and `lg`), sitting just below the text baseline,
+  with the same color as the native badge. This also holds when empty and labeled badges share a cell, in lists with
+  line breaks and for other badge sizes. Badges with text are drawn as before; in lists of badges over several lines,
+  each line is now placed at the measured line height, as the native table does (1px lower per line than before).
+- Spaces in cell text were drawn as they are, while the native table shows text with the browser's normal white-space
+  handling. A run of spaces made a wide gap (`0484571␣␣␣␣NTT…`), text could end in "…" earlier than in the native
+  table, and a leading space moved the text 4px to the right. Text, badges, descriptions and placeholders are now drawn
+  and measured (column widths, "…" truncation, `wrap()` and `lineClamp()`) as the browser shows them: runs of spaces,
+  tabs and line breaks become one space, and spaces at the start and the end are not shown. Ideographic spaces
+  (`　`, U+3000) and no-break spaces are kept, as in the browser. Cells styled with `white-space: pre` (or `pre-wrap`,
+  `break-spaces`) through `extraAttributes()` keep their spaces. Only the display changes: the values sent to the
+  browser, copied cells and inline editing keep the original text.
+
+- A date input (`TextInputColumn::make()->type('date')`) was drawn as an empty box when it had no value, and its value
+  as plain text (`2026-09-15`) without the calendar icon. It is now drawn as the browser's date input in the native
+  table: the date in the browser's format (`09/15/2026`, `2026/09/15` in Japanese), the field markers when it is empty
+  (`mm/dd/yyyy`, `年/月/日`) and the calendar icon on the right. `time` (with the clock icon), `datetime-local`, `month`
+  and `week` inputs are drawn the same way.
+- Picking a date in a date input saved nothing until the input lost focus. Inputs of type `date`, `time`,
+  `datetime-local`, `month` and `week` are now saved on `change`, as in the native table (`x-model.lazy`), and stay open
+  so the next field can be typed; a value picked while the previous one is still saving is saved after it, and Enter or
+  leaving the input does not send the same value again. Text and number inputs are saved as before.
+- A placeholder of an empty cell (`TextColumn::placeholder()`, and the same for icon, color and image columns) could be
+  cut with "…" (`未…`), because the column width was measured without the padding the native table puts around it. The
+  column is now as wide as in the native table, which also makes the whole table as wide as the native one.
+- In a `SelectColumn` with `searchableOptions()` or `native(false)`, a long selected name was cut with "…" on one line.
+  It now wraps inside the select as in the native table (`canOptionLabelsWrap()`, on by default), and the select and
+  its row are as tall as the wrapped name. With `canOptionLabelsWrap(false)` it stays on one line with "…", as before.
+
 ## [1.1.9] - 2026-10-28
 
 ### Fixed
