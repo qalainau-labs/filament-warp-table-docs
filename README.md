@@ -330,6 +330,20 @@ Warp Table only replaces the records area. In these states the regular Filament 
 - An empty result. Filament's empty state is shown with the header row, like the native table.
 - `->stackedOnMobile()` tables on screens narrower than `sm` (640px), where Filament stacks each record into a card. The browser reports the screen width, so resizing switches between the stacked native table and Warp Table without a reload. Tables without `stackedOnMobile()` stay on Warp Table on phones.
 
+## Testing
+
+Warp Table draws the rows on a canvas, so the rendered HTML contains no row markup. Filament's `assertCanSeeTableRecords()` and `assertCanNotSeeTableRecords()` therefore cannot find the records. To check which records the table shows, read them from the component instead:
+
+```php
+use Livewire\Livewire;
+
+$records = Livewire::test(ListNestings::class)->instance()->getTableRecords();
+
+expect($records->pluck('id')->all())->toBe([$mine->id]);
+```
+
+`getTableRecords()` returns the records of the current page after search, filters, sorting and tenancy are applied, which is the same set Warp Table draws.
+
 ## Limitations
 
 The canvas cannot do everything the DOM can. These are the known differences from the native table:
@@ -338,6 +352,7 @@ The canvas cannot do everything the DOM can. These are the known differences fro
 - **Selecting text with the mouse** is not possible inside the rows. In the native table this only affects cells that are not links, because link cells cannot be drag-selected there either.
 - **Browser find** (Cmd/Ctrl+F) works once the shortcut is pressed. Opening "Find" from the browser menu does not trigger it.
 - **Custom column types** are rendered as DOM overlays for the rows on screen (see *Supported columns*). They work, but they do not get the canvas speed-up.
+- **Scripts that follow the table's width** (for example, a horizontal scrollbar shown above the table) do not notice Warp Table resizing if they only use a `MutationObserver` on `childList`. Warp Table changes the canvas width without replacing any DOM. Use a `ResizeObserver` and observe the elements inside the table as well, not only its outer wrapper.
 
 ## How it works
 
