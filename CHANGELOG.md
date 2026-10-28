@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.9] - 2026-10-28
+
+### Fixed
+
+- Wrapped text with a line limit (`wrap()` + `lineClamp()`) could end in "…" earlier than the native table. Japanese,
+  Chinese and Korean text now breaks between any two characters, as the browser does, so a part after a space
+  (including the ideographic space `　`) fills the room left on the line before. Runs of Latin letters and digits
+  (`D25101601`, URLs) still stay whole and are only split when they are wider than the column. Line breaks follow the
+  browser's rules: no break before closing brackets and punctuation (`）」、。`) or after opening brackets, a break
+  after the hyphen in `Type-R`, none at a no-break space, and a closing bracket at the end of a line is narrowed to
+  half its width when it would not fit otherwise. Text is also measured with the same kerning as the page (Japanese
+  fonts were measured about 1.4% wider), and a line that is wider than the column by more than 0.1px now wraps, as
+  in the browser (it was 1px).
+- The right side of a group header (the collapse button and anything else on the right) was 12px further right than
+  in the native table. At the edges of the row, group headers now have the native padding (`sm:ps-6` / `sm:pe-6`),
+  on the left too when there is no checkbox column.
+
 ## [1.1.8] - 2026-10-25
 
 ### Fixed
