@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.11] - 2026-10-28
+
+### Fixed
+
+- A table whose record actions were all hidden (`hidden()` / `visible(false)` for every record) still had a 36px
+  empty actions column, so in a table that fits on the screen the other columns were narrower and further left than
+  in the native table (up to 22px at the right). As in the native table, the actions column is now only there when at
+  least one record has a visible action.
+- When the width of a table that fits on the screen shrank (for example when the page's vertical scrollbar appeared
+  just after loading), the table's content stayed at the old width for a frame, until the columns were measured
+  again: the scroll area (`.fi-warp-tbl-stage`) was briefly wider than its visible width, so it could be scrolled
+  sideways and scripts that compare `scrollWidth` with `clientWidth` saw an overflow. The canvas, and in a table that
+  fits also the content, the overlays, the summary rows and the group headers, now follow the visible width in the
+  same layout as the browser, so the content is never wider than the table.
+- An empty date input in Japanese (and Chinese) showed `年/月/日` starting 4px too far left. As in the browser's
+  date input, the year field is wider than `年` and the text is centred in it (`年 /月/日`, 18px from the left edge of
+  the input).
+
 ## [1.1.10] - 2026-10-28
 
 ### Fixed
