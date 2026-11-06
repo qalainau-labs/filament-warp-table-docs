@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-06
+
+### Changed
+
+- README: a "Testing inline edits" section with a full example of a test that edits cells through
+  `updateTableColumnState()`: a saved value, a value refused by `->rules()`, a toggle, an unknown select option, and
+  the other cases that return `['error' => ...]` without saving.
+
 ## [1.2.0] - 2026-11-06
 
 ### Added

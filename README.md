@@ -383,6 +383,50 @@ expect($records->pluck('id')->all())->toBe([$mine->id]);
 
 `getTableRecords()` returns the records of the current page after search, filters, sorting and tenancy are applied, which is the same set Warp Table draws.
 
+### Testing inline edits
+
+When you edit a cell, the browser calls Filament's own Livewire method `updateTableColumnState($column, $recordKey, $value)`, the same method the native table uses. A test calls it directly, with the column name, the record key as a string, and the value. A save that works returns the saved value (or what your `updateStateUsing()` returns). A refused value returns `['error' => '...']` and nothing is saved:
+
+```php
+use Livewire\Livewire;
+
+it('saves a valid price and refuses a negative one', function () {
+    // The column is TextInputColumn::make('price')->rules(['integer', 'min:0'])
+    $product = Product::factory()->create(['price' => 100]);
+
+    Livewire::test(ListProducts::class)
+        ->call('updateTableColumnState', 'price', (string) $product->getKey(), 250)
+        ->assertReturned(250);
+
+    expect($product->refresh()->price)->toBe(250);
+
+    Livewire::test(ListProducts::class)
+        ->call('updateTableColumnState', 'price', (string) $product->getKey(), -5)
+        ->assertReturned(fn (?array $result): bool => filled($result['error'] ?? null));
+
+    expect($product->refresh()->price)->toBe(250); // not saved
+});
+
+it('saves a toggle and refuses an unknown select option', function () {
+    $product = Product::factory()->create(['status' => 'draft', 'is_active' => false]);
+
+    Livewire::test(ListProducts::class)
+        ->call('updateTableColumnState', 'is_active', (string) $product->getKey(), true)
+        ->call('updateTableColumnState', 'status', (string) $product->getKey(), 'archived')
+        ->assertReturned(fn (?array $result): bool => filled($result['error'] ?? null));
+
+    expect($product->refresh())
+        ->is_active->toBeTrue()
+        ->status->toBe('draft');
+});
+```
+
+- Send the value the way the browser sends it: `true` / `false` for `ToggleColumn` and `CheckboxColumn`, the option key for `SelectColumn`, and `null` for an emptied `TextInputColumn` (the browser turns an empty input into `null`).
+- The value is checked with the column's `->rules()`. A `SelectColumn` also refuses a key that is not one of its options, or an option that is disabled.
+- `['error' => ...]` is also returned, without saving, when the column is hidden, is `disabled()` for that record, is not an editable column, or the record is not in the table's query (another tenant, or filtered out by `query()`).
+- `assertReturned()` checks the result of the last `call()`. When you chain several calls, check each one right after it, or read the database as above.
+- `updateStateUsing()`, `beforeStateUpdated()`, `afterStateUpdated()` and model events run as in the panel, so the test checks those too.
+
 ### Testing with tenancy
 
 In a panel with tenancy, set the tenant before you test the table, like the panel does on each request:
