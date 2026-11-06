@@ -51,6 +51,7 @@ On a real order-management table (grouped by file, with group subtotals), the na
   - Column widths are measured by the browser with the same markup, so columns line up with the native table to the pixel, at every screen width.
   - Phones and tablets: columns hidden with `visibleFrom()` / `hiddenFrom()` follow the screen width, touch scrolling and taps work, and `stackedOnMobile()` tables use Filament's stacked layout on narrow screens.
   - Browser find (Cmd/Ctrl+F) finds text in every row, including rows that are off screen.
+  - Screen readers and browser tests read the cells on screen: their text is kept in a hidden table in the page (see [Browser tests and screen recordings](#browser-tests-and-screen-recordings)).
 - **Sticky header**: `->warpStickyHeader()` keeps the header row on screen while the page scrolls, so you always know which column you are looking at, even 600 rows down. The native table cannot do this, because its scrolling container stops CSS `position: sticky` from working. It also works inside modals and slide-overs.
 - **Frozen columns**: `->warpFrozenColumns(2)` keeps the first columns in view while a wide table scrolls sideways, like frozen columns in a spreadsheet. The native table has no equivalent.
 - **Select and copy cells**: `->warpCellSelection()` lets users drag across cells and copy them with Ctrl/Cmd+C, ready to paste into Excel or Google Sheets. The native table cannot copy a block of cells.
@@ -116,6 +117,34 @@ php artisan filament:assets
 The service provider is auto-discovered. There is nothing else to register.
 
 > Run `php artisan filament:assets` again after every update of the package. The asset URLs contain a hash of the file contents, so browsers pick up the new build immediately.
+
+### AI coding assistants (Laravel Boost)
+
+Warp Table ships instructions for AI coding assistants such as Claude Code, Cursor and Codex. If your app uses
+[Laravel Boost](https://laravel.com/docs/boost), the assistant learns how to use Warp Table from them: that `->warp()`
+on your existing table is all it takes, which options replace custom code (sticky header, frozen columns, copying
+cells), what is easy to get wrong, and how to test a table whose rows are drawn on a canvas.
+
+- **Guidelines** (`resources/boost/guidelines/core.md`): a short summary that Boost adds to `CLAUDE.md`,
+  `AGENTS.md` and the other agent files. It also points the assistant to this README in `vendor/`, so it reads the
+  documentation of the version you have installed instead of guessing.
+- **Skill** `warp-table-development` (`resources/boost/skills/`): the steps for adding Warp Table to a table, where
+  validation and customisation go, and how to write feature and browser tests. The assistant loads it when it works on
+  a Warp Table.
+
+Boost does not add guidelines of other vendors' packages on its own. When `php artisan boost:install` asks
+"Which third-party AI guidelines/skills would you like to install?", select `qalainau/filament-warp-table`. To do
+it without the question, add the package to `boost.json` and run the command again:
+
+```json
+{
+    "packages": ["qalainau/filament-warp-table"]
+}
+```
+
+```bash
+php artisan boost:install --guidelines --skills -n
+```
 
 ## Usage
 
@@ -334,23 +363,88 @@ Warp Table only replaces the records area. In these states the regular Filament 
 
 ## Testing
 
-Warp Table draws the rows on a canvas, so the rendered HTML contains no row markup. Filament's `assertCanSeeTableRecords()` and `assertCanNotSeeTableRecords()` therefore cannot find the records. To check which records the table shows, read them from the component instead:
+Filament's table assertions work as usual. Warp Table draws the rows on a canvas, but it also puts a hidden marker for each record of the page into the HTML, the same text Filament looks for in the native table. So `assertCanSeeTableRecords()` (also with `inOrder: true`) and `assertCanNotSeeTableRecords()` check the records the table shows:
 
 ```php
 use Livewire\Livewire;
 
-$records = Livewire::test(ListNestings::class)->instance()->getTableRecords();
+Livewire::test(ListProducts::class)
+    ->assertCanSeeTableRecords($visible, inOrder: true)
+    ->assertCanNotSeeTableRecords($hidden);
+```
+
+Assertions that look for the cell text in the HTML, such as `assertSee('A-001')`, do not find it: the cells are drawn in the browser. To check what is in the cells, read the records from the component, or use the column assertions (`assertTableColumnStateSet()`, `assertTableColumnFormattedStateSet()`), which read the state from the columns and not from the HTML:
+
+```php
+$records = Livewire::test(ListProducts::class)->instance()->getTableRecords();
 
 expect($records->pluck('id')->all())->toBe([$mine->id]);
 ```
 
 `getTableRecords()` returns the records of the current page after search, filters, sorting and tenancy are applied, which is the same set Warp Table draws.
 
+### Testing with tenancy
+
+In a panel with tenancy, set the tenant before you test the table, like the panel does on each request:
+
+```php
+use Filament\Facades\Filament;
+
+Filament::setCurrentPanel('app');
+Filament::setTenant($teamA);
+Filament::bootCurrentPanel();
+
+Livewire::test(ListProducts::class)
+    ->assertCanSeeTableRecords($teamA->products)
+    ->assertCanNotSeeTableRecords($teamB->products);
+```
+
+The records of another tenant are not in the table's query, so they are simply not on the page: `assertCanNotSeeTableRecords()` passes, and nothing throws. The same is true for inline editing: sending the key of another tenant's record to `updateTableColumnState()` saves nothing (see [Multi-tenancy](#multi-tenancy)).
+
+### Browser tests and screen recordings
+
+The rows are drawn on a canvas, so there are no row elements in the page. To let screen readers and browser tests read the table anyway, Warp Table keeps the text of the cells on screen in a hidden `role="table"` next to the canvas. It holds the rows and columns that are visible right now (not the whole page, so a table of thousands of rows stays fast) and is updated after scrolling, sorting, searching, filtering, saving a cell and every refresh.
+
+- Each row has the record key in `data-record`, each cell the column name in `data-column`, and the header row the column labels.
+- The text is what the cell shows: the formatted value, the input or select value, and "Yes" / "No" for toggles and checkboxes (in the panel's language). Descriptions and placeholders are left out.
+- `innerText` of the table reads row by row, with a tab between cells.
+
+With Playwright:
+
+```js
+await expect(page.getByRole('cell', { name: 'A-001' })).toBeAttached()
+await expect(page.getByText('A-001', { exact: true })).toHaveCount(1)
+await expect(page.locator('[data-record="12"] [data-column="price"]')).toHaveText('4,200')
+```
+
+A cell that is scrolled out of view is not there until it scrolls back in. While the browser's find bar (Cmd/Ctrl+F) is in use, the hidden table is left out (see *Limitations*) and the find layer holds the text of all rows instead.
+
+To click or type into a cell, ask the table where the cell is on the screen:
+
+```js
+const cell = await page.evaluate(() =>
+    Alpine.$data(document.querySelector('.fi-warp-tbl')).cellPoint({ record: '12', column: 'price' }),
+)
+// { record: '12', column: 'price', row: 3, x: 1091, y: 540, left: 995, top: 506, width: 192, height: 68, visible: true }
+
+await page.mouse.click(cell.x, cell.y) // opens the price editor of record 12
+await page.keyboard.type('4200')
+await page.keyboard.press('Enter')
+
+// wait until the save has finished and the table is drawn again
+await page.evaluate(() => Alpine.$data(document.querySelector('.fi-warp-tbl')).whenIdle())
+```
+
+- **`cellPoint({ record, column })`** or **`cellPoint({ row, column })`** — returns a promise with the position of the cell. `record` is the record key (a string or a number), `row` the position of the row on the current page (0 is the first row), and `column` the column name. If the cell is out of view, the table scrolls it into view first (the page, or the table itself with `warpHeight()`), so a click at `x`, `y` lands on it. `x` and `y` are the center and `left`, `top`, `width`, `height` the box, in the same viewport pixels as `getBoundingClientRect()`. Pass `scroll: false` to measure without scrolling; `visible` then tells you whether the center can be clicked. It returns `null` for a record that is not on the current page, a row of a collapsed group, and a column that is hidden or does not exist.
+- **`whenIdle()`** — returns a promise that resolves when no request of the table (paging, sorting, search, filters) and no cell save is running and the table has been drawn again. It rejects after 10 seconds (`whenIdle({ timeout: 30000 })` to wait longer).
+- Livewire replaces the `.fi-warp-tbl` element on every update, so look it up again each time, as above. With several tables on one page, pick one with `document.querySelectorAll('.fi-warp-tbl')[n]`.
+
 ## Limitations
 
 The canvas cannot do everything the DOM can. These are the known differences from the native table:
 
-- **Screen readers** cannot read the rows. The canvas is not part of the accessibility tree. If your users rely on assistive technology, keep the native table for them. `->warp()` accepts a closure, so you can base it on a user preference, e.g. `->warp(fn () => ! auth()->user()->prefers_accessible_tables)`.
+- **Screen readers** read the cells that are on screen, as a table with column headers (see [Browser tests and screen recordings](#browser-tests-and-screen-recordings)). They cannot move to rows that are off screen, edit cells or run actions from that table: those work with the mouse and the keyboard on the canvas. If your users rely on assistive technology, keep the native table for them. `->warp()` accepts a closure, so you can base it on a user preference, e.g. `->warp(fn () => ! auth()->user()->prefers_accessible_tables)`.
+- **While the browser's find bar is in use**, the hidden table for screen readers and browser tests is left out, so that find does not count every match twice. It comes back after a reload.
 - **Selecting text with the mouse** is not possible inside the rows. In the native table this only affects cells that are not links, because link cells cannot be drag-selected there either.
 - **Browser find** (Cmd/Ctrl+F) works once the shortcut is pressed. Opening "Find" from the browser menu does not trigger it.
 - **Custom column types** are rendered as DOM overlays for the rows on screen (see *Supported columns*). They work, but they do not get the canvas speed-up.

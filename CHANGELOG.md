@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-06
+
+### Added
+
+- Instructions for AI coding assistants (Claude Code, Cursor, Codex) through [Laravel Boost](https://laravel.com/docs/boost):
+  a guideline that Boost adds to `CLAUDE.md` and `AGENTS.md`, and the `warp-table-development` skill for adding Warp
+  Table to a table, using its options and testing it. Select `qalainau/filament-warp-table` in
+  `php artisan boost:install`, or add it to `"packages"` in `boost.json`. See
+  [AI coding assistants (Laravel Boost)](README.md#ai-coding-assistants-laravel-boost).
+
+- Screen readers and browser tests can read the cells on screen. The text of the visible rows and columns is kept in a
+  hidden `role="table"` next to the canvas (rows carry `data-record`, cells `data-column`), so `getByText()`,
+  `getByRole('cell')` and `innerText` find the values. It holds only what is on screen and follows scrolling, sorting,
+  search, filters, saved cells and refreshes. Toggles and checkboxes read "Yes" / "No" in the panel's language.
+- `cellPoint({ record, column })` / `cellPoint({ row, column })` on the table's Alpine component returns where a cell is
+  on the screen (center and box in viewport pixels), scrolling it into view first, so browser tests and screen
+  recordings can click a cell without hard-coded coordinates. `whenIdle()` waits until requests, cell saves and the
+  redraw are done. See "Browser tests and screen recordings" in the README.
+
+### Fixed
+
+- Filament's `assertCanSeeTableRecords()` and `assertCanNotSeeTableRecords()` did not work with Warp Table: they look
+  for the row markers of the native table in the HTML, and the rows are drawn on a canvas. Warp Table now puts the same
+  markers into the page, so both assertions (also `inOrder: true`) check the records the table shows, including with
+  tenancy. The README's "Testing" section said to use `getTableRecords()` instead; it now shows both, plus a "Testing
+  with tenancy" example.
+
 ## [1.1.15] - 2026-10-28
 
 ### Fixed
