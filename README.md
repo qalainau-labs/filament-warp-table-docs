@@ -210,6 +210,8 @@ $table
 
 By default the table scrolls with the page, exactly like the native table. `warpStickyHeader()` keeps the page scroll but pins the header row below the panel's topbar until the last record scrolls past, so long tables stay readable. Inside a modal or slide-over, the header sticks to the top of the modal's scrolling area instead. The native table has no equivalent, because its scrolling container stops CSS `position: sticky` from working, so the option is off by default. `warpHeight()` switches to a fixed-height scroll area with a sticky header row. This is useful for dashboards or very long pages.
 
+For a table in a box of fixed height, such as a dashboard widget, use `warpHeight('400px')` rather than CSS `max-height` and `overflow` on a wrapper. Warp Table does not know about a scroll area that your CSS adds, so the header row would scroll away with the rows.
+
 ## Frozen columns
 
 A table with many columns scrolls sideways when it is wider than the page, and the columns that tell you which record you are looking at scroll away with the rest. `warpFrozenColumns()` keeps the first columns in view, like frozen columns in a spreadsheet:
@@ -361,6 +363,10 @@ Warp Table only replaces the records area. In these states the regular Filament 
 - An empty result. Filament's empty state is shown with the header row, like the native table.
 - `->stackedOnMobile()` tables on screens narrower than `sm` (640px), where Filament stacks each record into a card. The browser reports the screen width, so resizing switches between the stacked native table and Warp Table without a reload. Tables without `stackedOnMobile()` stay on Warp Table on phones.
 
+To show the records as cards on phones, use `->stackedOnMobile()`, not a column layout. `Split`, `Stack` and `Panel` make the table fall back to the native one on every screen, including the desktop, so a page of 500 rows loses the canvas. `stackedOnMobile()` stacks the records only below 640px and keeps Warp Table on larger screens.
+
+In the native table that a column layout falls back to, Filament's bar with the "select all" checkbox and the sort menu is shown as usual. Warp Table hides that bar only while it draws the rows itself, because its header row has the same controls.
+
 ## Testing
 
 Filament's table assertions work as usual. Warp Table draws the rows on a canvas, but it also puts a hidden marker for each record of the page into the HTML, the same text Filament looks for in the native table. So `assertCanSeeTableRecords()` (also with `inOrder: true`) and `assertCanNotSeeTableRecords()` check the records the table shows:
@@ -379,6 +385,14 @@ Assertions that look for the cell text in the HTML, such as `assertSee('A-001')`
 $records = Livewire::test(ListProducts::class)->instance()->getTableRecords();
 
 expect($records->pluck('id')->all())->toBe([$mine->id]);
+```
+
+To check whether Warp Table is on, for example when it is turned off for some users with `->warp(fn () => ...)`, ask the table, not the HTML:
+
+```php
+$this->actingAs($screenReaderUser);
+
+expect(Livewire::test(ListProducts::class)->instance()->getTable()->isWarp())->toBeFalse();
 ```
 
 `getTableRecords()` returns the records of the current page after search, filters, sorting and tenancy are applied, which is the same set Warp Table draws.
@@ -487,7 +501,7 @@ await page.evaluate(() => Alpine.$data(document.querySelector('.fi-warp-tbl')).w
 
 The canvas cannot do everything the DOM can. These are the known differences from the native table:
 
-- **Screen readers** read the cells that are on screen, as a table with column headers (see [Browser tests and screen recordings](#browser-tests-and-screen-recordings)). They cannot move to rows that are off screen, edit cells or run actions from that table: those work with the mouse and the keyboard on the canvas. If your users rely on assistive technology, keep the native table for them. `->warp()` accepts a closure, so you can base it on a user preference, e.g. `->warp(fn () => ! auth()->user()->prefers_accessible_tables)`.
+- **Screen readers** read the cells that are on screen, as a table with column headers (see [Browser tests and screen recordings](#browser-tests-and-screen-recordings)). They cannot move to rows that are off screen, edit cells or run actions from that table: those work with the mouse and the keyboard on the canvas. If your users rely on assistive technology, keep the native table for them. `->warp()` accepts a closure, so you can base it on a user preference, e.g. `->warp(fn () => ! auth()->user()->prefers_accessible_tables)`. The table is then exactly Filament's own: Warp Table adds no class to it, so none of its CSS applies.
 - **While the browser's find bar is in use**, the hidden table for screen readers and browser tests is left out, so that find does not count every match twice. It comes back after a reload.
 - **Selecting text with the mouse** is not possible inside the rows. In the native table this only affects cells that are not links, because link cells cannot be drag-selected there either.
 - **Browser find** (Cmd/Ctrl+F) works once the shortcut is pressed. Opening "Find" from the browser menu does not trigger it.

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-11-07
+
+### Fixed
+
+- When a table falls back to the native table because of a column layout (`Split`, `Stack`, `Panel`), Filament's bar
+  with the "select all" checkbox and the sort menu is shown again. Until 1.2.1 Warp Table's CSS hid it in every state,
+  so these tables had no way to select the whole page or to sort.
+- A table with Warp Table turned off (`->warp(false)` or a closure that returns `false`) no longer gets Warp Table's
+  class on its wrapper, so it is exactly Filament's own table.
+
+### Changed
+
+- README, guideline and skill: use `stackedOnMobile()` for cards on phones (a column layout turns Warp Table off on
+  every screen), `warpHeight()` for a box of fixed height (not CSS `max-height`), give users of screen readers the
+  native table with `->warp(fn () => ...)`, and check `isWarp()` in tests instead of the HTML.
+
 ## [1.2.1] - 2026-11-06
 
 ### Changed
