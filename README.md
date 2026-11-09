@@ -220,7 +220,7 @@ For a table in a box of fixed height, such as a dashboard widget, use `warpHeigh
 
 ## Frozen columns
 
-A table with many columns scrolls sideways when it is wider than the page, and the columns that tell you which record you are looking at scroll away with the rest. `warpFrozenColumns()` keeps the first columns in view, like frozen columns in a spreadsheet:
+A table with many columns scrolls sideways when it is wider than the page. Every Warp table then shades the edge where more columns are hidden — the right edge at first, the left edge once you have scrolled — because macOS and many trackpads hide the scrollbar until you scroll, and the last column would otherwise just look cut off. The columns that tell you which record you are looking at still scroll away with the rest. `warpFrozenColumns()` keeps the first columns in view, like frozen columns in a spreadsheet:
 
 ```php
 $table

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-11-10
+
+### Fixed
+
+- A table wider than the page now shades the edge where more columns are hidden: the right edge until you reach the last column, and the left edge once you have scrolled (with frozen columns, their own edge shadow does that). With the scrollbar hidden, as macOS and trackpads do until you scroll, the last visible column looked cut off and nothing showed the table could scroll. It works with a sticky header, `warpHeight()` and in dark mode.
+
 ## [1.2.2] - 2026-11-07
 
 ### Fixed
