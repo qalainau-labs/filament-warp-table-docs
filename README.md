@@ -90,7 +90,7 @@ A range of cells selected by dragging, ready to copy into a spreadsheet:
 
 - PHP 8.3+
 - Laravel 12 or 13
-- Filament 5.x (Livewire 4)
+- Filament 5.10.2 or later (Livewire 4)
 - SQLite, MySQL 8.0+, MariaDB 10.11+ or PostgreSQL 14+
 
 Works in panels and in standalone Livewire components that use Filament's Table Builder.
