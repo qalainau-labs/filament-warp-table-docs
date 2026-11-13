@@ -55,6 +55,8 @@ On a real order-management table (grouped by file, with group subtotals), the na
 - **Sticky header**: `->warpStickyHeader()` keeps the header row on screen while the page scrolls, so you always know which column you are looking at, even 600 rows down. The native table cannot do this, because its scrolling container stops CSS `position: sticky` from working. It also works inside modals and slide-overs.
 - **Frozen columns**: `->warpFrozenColumns(2)` keeps the first columns in view while a wide table scrolls sideways, like frozen columns in a spreadsheet. The native table has no equivalent.
 - **Select and copy cells**: `->warpCellSelection()` lets users drag across cells and copy them with Ctrl/Cmd+C, ready to paste into Excel or Google Sheets. The native table cannot copy a block of cells.
+- **Entry row**: `->warpEntryRow()` puts an empty row under the header. Type, Tab to the next field, press Enter, and the record is created with your resource's own form, validation and permissions. The native table only has the create page or modal.
+- **Sparklines and progress bars**: `SparklineColumn` draws a small line, area, bar or win/loss chart in each row, with the highest, lowest and latest values marked if you like, and `ProgressColumn` a progress bar with a percentage. The shapes are made on the server as SVG, so the native table shows them too.
 - **Grouping**: collapsible groups, HTML group titles, group descriptions and group selection.
 - **Column groups**: `ColumnGroup` labels above the column headers, with the same dividers as the native table.
 - **Summaries**: group subtotals, page summary and table summary, using Filament's summarizers.
@@ -208,6 +210,7 @@ $table
     ->warpStickyHeader()          // keep the header row on screen while the page scrolls (default: off)
     ->warpFrozenColumns(2)        // keep the first 2 columns in view while the table scrolls sideways (default: 0)
     ->warpCellSelection()         // select cells by dragging and copy them as a spreadsheet range (default: off)
+    ->warpEntryRow()              // an empty row under the header to add records with Enter (default: off)
     ->warpHeight('70vh')          // scroll inside the table with a sticky header (default: scroll with the page)
     ->warpRowHeight(56)           // fixed row height in px (default: computed from the content, like the native table)
     ->warpMeasureSampleSize(300)  // rows measured for column widths, plus the widest rows further down (default: 300)
@@ -261,6 +264,157 @@ $table
 - The range is kept across Livewire updates, for example after editing a cell or hiding another column, as long as its records and columns are still on the page. It works with `warpFrozenColumns()`, `warpStickyHeader()` and `warpHeight()`.
 - While the option is on, links in the rows can no longer be dragged to the browser's tab bar, because dragging selects cells. It is not available for multi-level rows.
 
+## Entry row
+
+People who add many short records, such as products, prices or time entries, should not have to open a form for each one. `warpEntryRow()` puts an empty row right under the header, with a field for each column:
+
+```php
+$table
+    ->warp()
+    ->warpEntryRow();
+```
+
+| Action | Result |
+| --- | --- |
+| Type, then Tab / Shift+Tab | Moves between the fields of the row. |
+| Enter | Creates the record. The row is emptied and the first field gets the focus again, ready for the next one. |
+| Esc | Clears the row. |
+
+- **The record is created by Filament's own `CreateAction`** (named `warpEntryRow`). On a resource's list page it uses the resource's `form()`, the `create` permission of your policy (`canCreate()`), the tenant of the panel and the success notification, exactly like the "New" button. In a relation manager, the record is created through the relationship.
+- **Which fields are in the row**: every column whose name is a field of the form. `TextInput` (text, number, email, phone, URL), `Textarea`, `Select` (one value, with options that can be listed), `Toggle`, `Checkbox`, `DatePicker` and `DateTimePicker` get a field; other fields, such as file uploads or selects that search the server, are left out. Choose the columns yourself with `warpEntryRow(columns: ['sku', 'name', 'price'])`.
+- **Validation** runs the rules of the form. When a value in the row is wrong, its message is shown under the field and nothing is saved.
+- **Required fields that are not in the table**: when the form has a required field that the row does not show (or another field outside the row fails validation), Enter opens the create modal with the values you typed, so you can fill in the rest there. Nothing is saved until the modal is submitted.
+- **Fields that are left empty** get the form's `default()` values.
+- **Dates and times** are typed in the browser's date and time fields, in the field's `timezone()` (the panel's timezone by default), and saved like the same value typed in the modal.
+- The row is not shown to people who cannot create records, when the form cannot be built, for multi-level rows, and when Warp Table falls back to the native table. Bulk pasting is not part of it; that is what a spreadsheet editor is for.
+
+### Customising the action
+
+The third argument receives the action, so you can change it like any Filament action:
+
+```php
+use Qalainau\FilamentWarpTable\EntryRow\WarpEntryRowAction;
+
+$table->warpEntryRow(action: fn (WarpEntryRowAction $action) => $action
+    ->successNotification(null)                     // no notification for each new row
+    ->mutateDataUsing(fn (array $data): array => [...$data, 'created_by' => auth()->id()]));
+```
+
+On a custom page or in a standalone Livewire table, there is no resource to take the form and the permission from. Give them to the action yourself:
+
+```php
+$table->warpEntryRow(action: fn (WarpEntryRowAction $action) => $action
+    ->model(Product::class)
+    ->schema([
+        TextInput::make('sku')->required(),
+        TextInput::make('price')->numeric()->required()->minValue(0),
+    ])
+    ->authorize(fn (): bool => auth()->user()->can('create', Product::class)));
+```
+
+Do not call `fillForm()` or `mountUsing()` on the action: they would replace the step that puts the typed values into the form.
+
+### Security
+
+- The browser sends the typed values to Filament's `mountAction('warpEntryRow', ...)`. Only the values of the fields shown in the row are put into the form; any other key, such as `id` or `team_id`, is dropped, and values that are not text, numbers or booleans are ignored. The values then go through your form's validation, so a `Select` only accepts its own options.
+- Calling the Livewire method directly does nothing for people the action is hidden from (no `create` permission), and for tables without `warpEntryRow()`.
+- In a panel with tenancy, the new record is attached to the current tenant by Filament, as with the "New" button.
+
+## Sparklines and progress bars
+
+Two column types draw a small chart in each row. The shapes are made on the server as SVG paths: Warp Table draws them on the canvas, and the native table (`->warp(false)` or a fallback) shows the same SVG, so the columns work in any Filament table.
+
+```php
+use Qalainau\FilamentWarpTable\Columns\ProgressColumn;
+use Qalainau\FilamentWarpTable\Columns\SparklineColumn;
+
+SparklineColumn::make('sales')
+    ->data(fn (Customer $record): array => $record->monthly_sales) // oldest first
+    ->highlightMax()
+    ->highlightMin()
+    ->highlightLast(),
+
+ProgressColumn::make('done_tasks')
+    ->maxValue(fn (Project $record): int => $record->tasks_count),
+```
+
+### `SparklineColumn`
+
+| Method | Default | What it does |
+| --- | --- | --- |
+| `data(array \| Closure)` | the column's state | The values, oldest first. Without `data()`, the column's state is used (an array or a collection, for example a JSON column cast to `array`). Values that are not numbers are skipped. |
+| `line()`, `area()`, `bar()`, `winLoss()` | `line()` | The kind of chart. `area()` fills under the line. `bar()` draws bars from zero, down for negative values. `winLoss()` draws an up bar for every value above zero, a down bar below zero and a thin bar for zero, all of the same size. |
+| `color(string \| array \| Closure)` | `primary` (`success` for `winLoss()`) | The color of the line and the bars: a Filament color name or a `Color::*` array. A closure receives `$state` (the values) and `$record`, for example `fn (array $state) => end($state) >= $state[0] ? 'success' : 'danger'`. |
+| `negativeColor(...)` | `danger` | The color of the bars below zero. |
+| `highlightMax(condition, color)` | off, `success` | Marks the highest value with a dot (a colored bar for bar charts). |
+| `highlightMin(condition, color)` | off, `danger` | Marks the lowest value. |
+| `highlightLast(condition, color)` | off, the chart's color | Marks the latest value. |
+| `chartSize(width, height)` | 96 × 28 | The size of the chart in pixels. |
+
+`placeholder()` is shown when there are no values, and `tooltip()` receives the values as `$state`. The colors follow dark mode like `IconColumn`. When cells are copied (`warpCellSelection()`) and for screen readers, the cell reads as its values, separated by commas.
+
+### `ProgressColumn`
+
+| Method | Default | What it does |
+| --- | --- | --- |
+| `maxValue(int \| float \| Closure)` | 100 | The value of 100%. The bar shows the column's state divided by it. A closure receives `$record`. With 0 or `null`, the cell shows the placeholder. |
+| `color(string \| array \| Closure)` | `primary` | A closure receives `$state` and `$percentage` (0 to 100 or more), for example `fn (?float $percentage) => $percentage < 20 ? 'danger' : 'success'`. |
+| `percentageLabel(bool)` | on | Shows the percentage next to the bar, in the panel's language (one decimal below 10%). |
+| `barWidth(int)` | 96 | The length of the bar in pixels. |
+
+Values above the maximum fill the bar and keep their percentage (for example "125%"); values below zero show an empty bar. `max()` is not used for the maximum because Filament's columns already have `max()` for relationship aggregates.
+
+### Load the values of the whole page at once
+
+`data()` runs once for each row. A closure that runs its own query, such as `fn ($record) => $record->orders()->...->get()`, sends one query per row, 1,000 queries for a page of 1,000 rows. Load the values for the whole page in one query instead, and read them in `data()`:
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
+
+public function table(Table $table): Table
+{
+    return $table
+        ->warp()
+        ->columns([
+            TextColumn::make('name'),
+            SparklineColumn::make('sales')
+                ->data(fn (Customer $record): array => $this->monthlySales()[$record->getKey()] ?? []),
+        ]);
+}
+
+/**
+ * The sales of the last 12 months of every customer on the page, in one query.
+ *
+ * @return array<int, array<int, float>>
+ */
+protected function monthlySales(): array
+{
+    return $this->monthlySales ??= (function (): array {
+        $ids = $this->getTableRecords()->modelKeys();
+        $months = collect(range(11, 0))->map(fn (int $ago): string => now()->subMonthsNoOverflow($ago)->format('Y-m'));
+
+        $rows = DB::table('orders')
+            ->selectRaw("customer_id, strftime('%Y-%m', ordered_at) as month, sum(total) as total") // DATE_FORMAT() on MySQL
+            ->whereIn('customer_id', $ids)
+            ->where('ordered_at', '>=', now()->subMonthsNoOverflow(11)->startOfMonth())
+            ->groupBy('customer_id', 'month')
+            ->get()
+            ->groupBy('customer_id');
+
+        return collect($ids)->mapWithKeys(fn (int $id): array => [
+            $id => $months->map(fn (string $month): float => (float) ($rows[$id] ?? collect())->firstWhere('month', $month)?->total)->all(),
+        ])->all();
+    })();
+}
+
+protected ?array $monthlySales = null;
+```
+
+- The query runs once per request for the records of the current page (`getTableRecords()`), after search, filters, sorting and tenancy are applied. Months without orders become 0, so every row has 12 values.
+- For a value that is already on the record, such as a progress bar, no extra query is needed. When the value comes from a relationship, use a Filament aggregate on the column (`ProgressColumn::make('tasks_done_count')->counts(['tasks as tasks_done_count' => fn (Builder $query) => $query->whereNotNull('done_at')])`) or `withCount()` in `modifyQueryUsing()`.
+- A stored summary, such as a JSON column with the last 12 months that a job updates every night, is the fastest: `data()` then reads the attribute, and nothing is computed while the page loads.
+
 ## Multi-level rows
 
 Wide records are easier to read when each record spans several lines, like a paper ledger. `warpMultiLevel()` lays the columns out on a grid: every record gets the same number of lines, and each column is placed on the grid with `warpCell()`.
@@ -311,6 +465,7 @@ Multi-level rows are a Warp Table layout. When Warp Table is disabled or falls b
 | `SelectColumn` | Drawn on the canvas. A native select is edited in a real `<select>` (grouped options are supported). `native(false)` and `searchableOptions()` columns open Filament's own select, with search, server-side search results and relationships. |
 | `ToggleColumn` | On/off colors and icons. |
 | `CheckboxColumn` | Standard checkbox. |
+| `SparklineColumn`, `ProgressColumn` | Warp Table's own columns (see [Sparklines and progress bars](#sparklines-and-progress-bars)). Drawn on the canvas from the same SVG shapes the native table shows. |
 | Anything else | The column's regular HTML is rendered as a DOM overlay for the rows currently on screen, for example `ViewColumn`, HTML or Markdown `TextColumn`, and third-party columns. |
 
 Row classes from `->recordClasses()` are supported. Background colors, text colors and opacity that your CSS assigns to those classes (for example `tr.is-overdue > td { background: … }`) are applied to the canvas rows.
@@ -350,6 +505,7 @@ Warp Table works in panels with [multi-tenancy](https://filamentphp.com/docs/5.x
 - **Rows, search, sorting, filters, groups and summaries** come from the table's query, the same query the native table uses.
 - **Inline editing** (`TextInputColumn`, `SelectColumn`, `ToggleColumn`, `CheckboxColumn`) saves through Filament's `updateTableColumnState()`, which looks the record up in the table's query. A record key of another tenant is not found, so nothing is saved.
 - **Bulk actions** get the selected records from the table's query, so they only see the records of the current tenant.
+- **The entry row** (`warpEntryRow()`) creates records with Filament's `CreateAction`, which attaches them to the current tenant, and the options of its selects come from the form, scoped like the form's own.
 - **Select column options** come from the column (`getOptions()`, and the searchable options from Filament's `callTableColumnMethod()`).
 
 Things to check in your own code:
@@ -446,6 +602,32 @@ it('saves a toggle and refuses an unknown select option', function () {
 - `['error' => ...]` is also returned, without saving, when the column is hidden, is `disabled()` for that record, is not an editable column, or the record is not in the table's query (another tenant, or filtered out by `query()`).
 - `assertReturned()` checks the result of the last `call()`. When you chain several calls, check each one right after it, or read the database as above.
 - `updateStateUsing()`, `beforeStateUpdated()`, `afterStateUpdated()` and model events run as in the panel, so the test checks those too.
+
+### Testing the entry row
+
+When Enter is pressed in the entry row, the browser calls Filament's `mountAction('warpEntryRow', ['values' => [...]], ['table' => true])`. Call it the same way in a test. A record that passes validation is created at once; a wrong value in the row is returned as a validation error of `mountedActions.0.data.<field>`; a required field outside the row opens the modal:
+
+```php
+use Qalainau\FilamentWarpTable\EntryRow\WarpEntryRowAction;
+
+it('adds a product from the entry row', function () {
+    Livewire::test(ListProducts::class)
+        ->call('mountAction', WarpEntryRowAction::NAME, ['values' => ['sku' => 'A-100', 'name' => 'Pencil', 'price' => '120']], ['table' => true])
+        ->assertHasNoErrors();
+
+    expect(Product::where('sku', 'A-100')->exists())->toBeTrue();
+});
+
+it('refuses a negative price', function () {
+    Livewire::test(ListProducts::class)
+        ->call('mountAction', WarpEntryRowAction::NAME, ['values' => ['sku' => 'A-100', 'name' => 'Pencil', 'price' => '-5']], ['table' => true])
+        ->assertHasErrors(['mountedActions.0.data.price']);
+
+    expect(Product::where('sku', 'A-100')->exists())->toBeFalse();
+});
+```
+
+In a browser test, the fields of the row have `data-warp-entry-field="<column name>"`, so `page.locator('[data-warp-entry-field="sku"]').fill('A-100')` and `.press('Enter')` work as for any input.
 
 ### Testing with tenancy
 

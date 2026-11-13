@@ -5,6 +5,13 @@ All notable changes to `qalainau/filament-warp-table` will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-11-13
+
+### Added
+
+- **Entry row**: `->warpEntryRow()` puts an empty row under the header. Type, press Tab to move to the next field and Enter to create the record; the row is then emptied for the next one. The record is created by Filament's own `CreateAction`, so the resource's form, validation, `create` permission, tenancy and notification apply as with the "New" button. A wrong value is shown under its field and nothing is saved. When a required field of the form is not in the table, Enter opens the create modal with the typed values. Only the fields shown in the row are taken from the browser. Off by default; see "Entry row" in the README.
+- **`SparklineColumn`**: a small line, area, bar or win/loss chart in each row, with optional marks on the highest, lowest and latest values, colors that can depend on the values, and dark mode. **`ProgressColumn`**: a progress bar with a percentage, against a maximum you choose per record. Both make their shapes on the server as SVG, so the native table shows them too. The README shows how to load the values of the whole page in one query.
+
 ## [1.2.4] - 2026-11-12
 
 ### Changed
