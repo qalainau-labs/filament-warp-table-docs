@@ -5,6 +5,17 @@ All notable changes to `qalainau/filament-warp-table` will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-11-16
+
+### Added
+
+- **Working with other Warp plugins**: `->quickLook()` columns of Warp Quick Look (dotted underline, hover card, details on click or Enter, previous and next, focus back on the viewed cell) and `HasSplitView` of Warp Split View (a click opens the row in the pane, ↑↓ and j/k step through the rows, the open row is highlighted) now work on the canvas table. Before, the canvas had no marks for Quick Look and a click always went to the record page. See “Working with other Warp plugins” in the README.
+- **JavaScript integration** for other plugins: the `data-warp-*` attributes of a column's `extraAttributes()` per record, `data-warp-table-decoration="dotted-underline"`, the cancelable `warp-table:open-row` event, `warp-table:rows-changed` and `warp-table:focus-row`, and `element.warpTable` (`rowKeys()`, `rowUrl()`, `markRow()`, `focusRow()`). The colours of the marked row are the CSS variables `--warp-table-marked-row-bg` and `--warp-table-marked-row-edge`.
+
+### Fixed
+
+- **Static analysis**: Larastan no longer reports “Call to an undefined method” for `->warp()`, `->warpStickyHeader()`, `->warpCell()` and the other methods this plugin adds to tables and columns. The plugin ships `extension.neon`, a PHPStan extension that reads Filament's macros (loaded automatically with `phpstan/extension-installer`; otherwise add it to `includes`). See “Static analysis” in the README.
+
 ## [1.3.0] - 2026-11-13
 
 ### Added

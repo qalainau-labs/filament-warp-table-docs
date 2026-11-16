@@ -719,6 +719,20 @@ The canvas cannot do everything the DOM can. These are the known differences fro
 
 See [CHANGELOG.md](CHANGELOG.md).
 
+## Static analysis (PHPStan / Larastan)
+
+The methods this plugin adds to Filament's components with `macro()` (`->warp()`, `->warpStickyHeader()`, `->warpFrozenColumns()`, `->warpCell()` …) are not declared on the classes, so Larastan reports “Call to an undefined method” for them. The plugin ships a PHPStan extension that tells PHPStan about them, with their real parameters and return types:
+
+- With [`phpstan/extension-installer`](https://github.com/phpstan/extension-installer), there is nothing to do.
+- Without it, add the file to your `phpstan.neon`:
+
+```neon
+includes:
+    - vendor/qalainau/filament-warp-table/extension.neon
+```
+
+The extension reads the macros that are registered when Larastan boots your app, so it needs [Larastan](https://github.com/larastan/larastan) (plain PHPStan does not boot the app). It also covers the macros your own app adds to Filament components.
+
 ## Support
 
 Ask a question or report a bug at https://warpui.com/support?plugin=table. Do not post your license key in your question.
@@ -726,3 +740,54 @@ Ask a question or report a bug at https://warpui.com/support?plugin=table. Do no
 ## License
 
 Warp Table is commercial software. See [LICENSE.md](LICENSE.md) for the license terms.
+
+## Working with other Warp plugins
+
+Warp Quick Look columns and Warp Split View also work with the canvas table. Keep using `->quickLook()` on your columns and `HasSplitView` on the list page; no integration option is needed. Quick Look retains hover cards, click and keyboard activation, previous/next through the current page, and focus restoration. Split View retains row selection, highlighting, ↑/↓ and j/k navigation, and returning focus from the pane. Each plugin remains optional.
+
+## JavaScript integration
+
+Scalar `data-warp-*` attributes from a column's `extraAttributes()` are evaluated for each record and included as strings in the cell's `wa` payload. Other attributes are excluded. The table keeps an ordered, hidden `.fi-warp-tbl-marks` list inside `.fi-ta`, with a span for every attributed cell. Each span also has `data-warp-table-row` (the record key) and `data-warp-table-column` (the column name). A transparent `.fi-warp-tbl-cell-mark` carries the current cell's attributes under the pointer and on keyboard activation, so delegated event listeners can handle the cell.
+
+Use `data-warp-table-decoration="dotted-underline"` to draw a dotted underline under the cell's text. It becomes solid while the pointer is over the cell proxy. This marker is available to any integration:
+
+```php
+TextColumn::make('name')->extraAttributes(fn ($record) => [
+    'data-warp-example' => (string) $record->getKey(),
+    'data-warp-table-decoration' => 'dotted-underline',
+]);
+```
+
+Before opening a record or column URL in the current tab, the `.fi-warp-tbl` root emits a bubbling, cancelable `warp-table:open-row` event. Its detail is `{ key, url, newTab, column, source }`: keys are strings, `column` is the column name or `null`, and `source` is `click` or `keyboard`. Calling `preventDefault()` cancels navigation. Modified clicks, middle clicks and links configured to open a new tab bypass this event.
+
+```js
+document.addEventListener('warp-table:open-row', (event) => {
+    if (!canOpenInPane(event.detail.url)) return;
+    event.preventDefault();
+    openInPane(event.detail.key, event.detail.url);
+});
+```
+
+Every canvas root has `data-warp-table-api="1"` and an `element.warpTable` API:
+
+```js
+const root = document.querySelector('[data-warp-table-api]');
+const table = root.warpTable;
+const keys = table.rowKeys(); // current page, in display order, without group headings
+const url = table.rowUrl(keys[0]); // record URL, or null
+table.markRow(keys[0]); // highlight the open row; survives payload changes for the same key
+table.focusRow(keys[0]); // scroll into view and focus the first link cell, or first cell
+table.focusRow(keys[0], 'customer.name'); // the same, on the cell of that column
+table.markRow(null); // clear the highlight
+```
+
+The highlight of `markRow()` is a light primary colour with a 3px primary line on the left. An integration can set two CSS variables on an element around the table to use its own colours (Warp Split View passes its selected-row colours):
+
+```css
+.my-list {
+    --warp-table-marked-row-bg: color-mix(in oklab, var(--primary-500) 10%, transparent);
+    --warp-table-marked-row-edge: var(--primary-600); /* a 3px line on the left of the row */
+}
+```
+
+The root emits bubbling `warp-table:rows-changed` after a payload changes, and `warp-table:focus-row` with detail `{ key }` when keyboard focus moves to a different row. Livewire can replace the root, so look up its current API again after a redraw.
