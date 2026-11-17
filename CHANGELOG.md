@@ -5,6 +5,18 @@ All notable changes to `qalainau/filament-warp-table` will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-11-17
+
+### Added
+
+- **`warpNativeBelow()`**: the screen width (`'sm'`, `'md'`, `'lg'`, `'xl'` or `'2xl'`) below which the table is shown as Filament's own table, for layouts on narrow screens that need Filament's HTML table. Without it, `->stackedOnMobile()` tables still switch below `'sm'` as before. Warp Mobile uses it so that `->mobileCards()` show as cards up to its own breakpoint (768px by default). See “Automatic fallback” in the README.
+
+### Fixed
+
+- **Columns whose view was replaced** with `->view()` (a `TextColumn`, `IconColumn` or other built-in column) were drawn on the canvas as plain text, without their own HTML. They are now shown with their HTML over the canvas, like `ViewColumn`. With Warp Tree, the first column of a `->warpTree()` table had no indent and no arrow, so rows under the top level could not be opened.
+- **Tables in a table widget** (`TableWidget`) could lose their canvas after a Livewire update, such as opening a row or changing the number of rows per page: the rows were gone until the page was reloaded. This came with 1.4.0, which added hidden marks for other plugins next to the canvas; they are now inside the canvas area, which Livewire leaves alone.
+- With Warp Mobile, a `->mobileCards()` table on screens between 640px and Warp Mobile's breakpoint (768px by default) was a canvas table squeezed by the card CSS. It now shows the cards.
+
 ## [1.4.0] - 2026-11-16
 
 ### Added

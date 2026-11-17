@@ -466,7 +466,7 @@ Multi-level rows are a Warp Table layout. When Warp Table is disabled or falls b
 | `ToggleColumn` | On/off colors and icons. |
 | `CheckboxColumn` | Standard checkbox. |
 | `SparklineColumn`, `ProgressColumn` | Warp Table's own columns (see [Sparklines and progress bars](#sparklines-and-progress-bars)). Drawn on the canvas from the same SVG shapes the native table shows. |
-| Anything else | The column's regular HTML is rendered as a DOM overlay for the rows currently on screen, for example `ViewColumn`, HTML or Markdown `TextColumn`, and third-party columns. |
+| Anything else | The column's regular HTML is rendered as a DOM overlay for the rows currently on screen, for example `ViewColumn`, HTML or Markdown `TextColumn`, third-party columns, and any column whose view was replaced with `->view()` (also a `TextColumn` or `IconColumn`). |
 
 Row classes from `->recordClasses()` are supported. Background colors, text colors and opacity that your CSS assigns to those classes (for example `tr.is-overdue > td { background: … }`) are applied to the canvas rows.
 
@@ -524,6 +524,18 @@ Warp Table only replaces the records area. In these states the regular Filament 
 - Groups-only tables (`->groupsOnly()`).
 - An empty result. Filament's empty state is shown with the header row, like the native table.
 - `->stackedOnMobile()` tables on screens narrower than `sm` (640px), where Filament stacks each record into a card. The browser reports the screen width, so resizing switches between the stacked native table and Warp Table without a reload. Tables without `stackedOnMobile()` stay on Warp Table on phones.
+- Screens narrower than `warpNativeBelow()`, when you set it (below).
+
+`warpNativeBelow()` sets the screen width below which the table is shown as Filament's own table: `'sm'` (640px), `'md'` (768px), `'lg'` (1024px), `'xl'` (1280px) or `'2xl'` (1536px), the breakpoints of Filament and Tailwind. Use it when something on narrow screens needs Filament's HTML table, for example a CSS card layout of your own. Without it (or with `null`), only `->stackedOnMobile()` tables switch, below `'sm'`. Like the `stackedOnMobile()` switch, resizing the window switches without a reload.
+
+```php
+$table
+    ->warp()
+    ->warpNativeBelow('md');                 // Filament's table below 768px
+    // or a closure: ->warpNativeBelow(fn (): ?string => $this->compact ? 'lg' : null)
+```
+
+Any other value throws an `InvalidArgumentException`.
 
 To show the records as cards on phones, use `->stackedOnMobile()`, not a column layout. `Split`, `Stack` and `Panel` make the table fall back to the native one on every screen, including the desktop, so a page of 500 rows loses the canvas. `stackedOnMobile()` stacks the records only below 640px and keeps Warp Table on larger screens.
 
@@ -743,7 +755,12 @@ Warp Table is commercial software. See [LICENSE.md](LICENSE.md) for the license 
 
 ## Working with other Warp plugins
 
-Warp Quick Look columns and Warp Split View also work with the canvas table. Keep using `->quickLook()` on your columns and `HasSplitView` on the list page; no integration option is needed. Quick Look retains hover cards, click and keyboard activation, previous/next through the current page, and focus restoration. Split View retains row selection, highlighting, ↑/↓ and j/k navigation, and returning focus from the pane. Each plugin remains optional.
+Warp Quick Look columns and Warp Split View also work with the canvas table. Keep using `->quickLook()` on your columns and `HasSplitView` on the list page; no integration option is needed. Quick Look retains hover cards, click and keyboard activation, previous/next through the current page, and focus restoration. Split View retains row selection, highlighting, ↑/↓ and j/k navigation, Enter on the open row to move into the pane, and returning focus from the pane. Each plugin remains optional.
+
+The other table features of Warp plugins work on a `->warp()` table as well:
+
+- **Warp Tree** `->warpTree()`: the first column keeps its indent and the arrow that opens a row (it is shown as HTML over the canvas, see [Supported columns](#supported-columns)); totals, indent and outdent work as on the native table.
+- **Warp Mobile** `->mobileCards()` and `->swipeActions()`: below the breakpoint of Warp Mobile (768px by default) the table is shown as Filament's table with Warp Mobile's cards and swipes; on wider screens it is the canvas table. Warp Mobile sets this with `warpNativeBelow()` (see [Automatic fallback](#automatic-fallback)); you do not need to call it.
 
 ## JavaScript integration
 
