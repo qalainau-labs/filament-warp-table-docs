@@ -5,6 +5,15 @@ All notable changes to `qalainau/filament-warp-table` will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [1.5.1] - 2026-11-19
+
+### Fixed
+
+- **`warpTable is not defined` in the console** when a Warp Table list appeared on a page whose layout re-renders with Livewire before the table's script has arrived (seen in a panel with Warp Mobile, Warp Offline and Warp Shift, when moving from another page to a list; the list worked after a moment). Filament's `x-load` holds back the table's Alpine component until its script is downloaded, but a Livewire re-render inside another Alpine component (such as Filament's table or Warp Mobile's swipe table) evaluates `warpTable()` earlier. Warp Table now registers an empty `warpTable` in the panel's scripts, which the real one replaces when it arrives.
+- **Copying cells**: a cell whose text contains a lone carriage return (`\r`, e.g. text that came from an old Mac file) is now quoted when copied, so pasting it into Excel or Google Sheets no longer splits it into extra rows.
+
 ## [1.5.0] - 2026-11-17
 
 ### Added
