@@ -207,9 +207,16 @@ $table->warp(fn (): bool => auth()->user()->prefersFastTables());
 ```php
 $table
     ->warp()
+    ->warpInfiniteScroll(100, 2000) // grow the current page while scrolling (default: off)
     ->warpStickyHeader()          // keep the header row on screen while the page scrolls (default: off)
+    ->warpFrozenEndColumns(1)     // keep the last column and trailing row actions at the right edge (opt-in)
     ->warpFrozenColumns(2)        // keep the first 2 columns in view while the table scrolls sideways (default: 0)
+    ->warpPaste()                 // paste spreadsheet cells and fill down (default: off; enables cell selection)
     ->warpCellSelection()         // select cells by dragging and copy them as a spreadsheet range (default: off)
+    ->warpPinnedRows()           // pin records per user and tenant (default: off)
+    ->warpHeaderFilters()        // Excel-style filters on marked column headings (after filters())
+    ->warpRowDetail(fn (Model $record) => view('products.detail', compact('record'))) // expandable read-only details
+    ->warpResizableColumns()     // drag header boundaries to resize columns (default: off)
     ->warpEntryRow()              // an empty row under the header to add records with Enter (default: off)
     ->warpHeight('70vh')          // scroll inside the table with a sticky header (default: scroll with the page)
     ->warpRowHeight(56)           // fixed row height in px (default: computed from the content, like the native table)
@@ -239,6 +246,167 @@ $table
 
 The native table has no equivalent, so when Warp Table falls back to the native table (see *Automatic fallback*), the columns simply scroll.
 
+Keep columns at the right edge with `warpFrozenEndColumns()`:
+
+```php
+$table
+    ->warpFrozenColumns(2)
+    ->warpFrozenEndColumns(1); // last user column and trailing row actions
+```
+
+The first argument counts user columns from the end of the visible order (default `0`, negative values become `0`). The second argument, `actions` (default `true`), also freezes the row actions when their position is `AfterColumns` or `AfterCells`. Call `->warpFrozenEndColumns()` with no arguments to freeze only those actions, or `->warpFrozenEndColumns(1, actions: false)` to freeze only the last user column. Both arguments accept closures. Without this call, nothing is frozen at the right edge.
+
+The right boundary casts a light shadow only while more content is hidden toward the right. Headers, sticky headers, summaries, column searches and the entry row follow the frozen columns. Start and end freezing together must fit within two thirds of the viewport; start freezing takes priority and end columns are dropped from the right when the limit is exceeded. Tables that fit the viewport, multi-level layouts and the native table on narrow screens do not freeze end columns.
+
+## Resizing columns
+
+`warpResizableColumns()` lets each person drag the right boundary of a column heading to set its width. Double-click the boundary to remove that override and return to the current measured width. Widths apply from the first draw and stay aligned with frozen columns, sticky headers, column searches, entry rows, group headings and summaries.
+
+```php
+$table
+    ->warp()
+    ->warpResizableColumns(condition: true, remember: true)
+    ->warpPreferencesKey('orders'); // optional; accepts a closure
+```
+
+Both `condition` and `remember` accept booleans or closures and default to `true`. With `remember: false`, widths last for the current table view and reset on a page reload. With remembering enabled, signed-in users save widths in the database, separately for each user, tenant and table. Guests use their browser's localStorage instead. The default table key is the Livewire class name, plus the relationship name for a relation manager; `warpPreferencesKey()` overrides it.
+
+Publish and run the optional migration before enabling database persistence:
+
+```sh
+php artisan vendor:publish --tag=filament-warp-table-migrations
+php artisan migrate
+```
+
+Migrations never run automatically. A missing preferences table produces an error with these commands only when a signed-in table uses persistence. Tables without resizing do not read preferences or load the resizing JavaScript. No tenant is stored as an empty string, so the database enforces uniqueness consistently.
+
+Only ordinary data columns can be resized. Selection checkboxes, record action columns, multi-level tables and the native table fallback are excluded. Widths are stored as pixels by column name. The server discards unknown or hidden columns and nonnumeric values, converts numeric values to integers, clamps them to 48–1600px, and accepts at most 200 overrides. Resetting a column removes its saved override. Saving happens once when dragging ends and skips the Livewire render; an open action modal defers the save until it closes.
+
+### Pinned rows
+
+Keep frequently used records at the top of a list for each signed-in user:
+
+```php
+$table->warp()->warpPinnedRows();
+$table->warpPinnedRows(condition: fn () => true, max: 20);
+```
+
+`condition` accepts a boolean or closure (default `true`); `max` accepts an integer or closure (default `20`). New pins are saved first and the oldest pins are dropped when the limit is reached. Pinned rows are listed in that order: the latest pin first. The **Pin to top** / **Unpin** record action is appended automatically, regardless of whether `recordActions()` is called before or after `warpPinnedRows()`. You may place `Qalainau\FilamentWarpTable\Actions\WarpPinAction::make()` yourself, including inside an action group; it will not be added twice.
+
+Preferences use the optional `warp_table_preferences` table, with kind `pinned_rows`, scoped by user, table and tenant. Publish and run its migration (the same migration used for column widths):
+
+```bash
+php artisan vendor:publish --tag=filament-warp-table-migrations
+php artisan migrate
+```
+
+`warpPreferencesKey()` overrides the default table identity (Livewire class plus relationship name for relation managers). Guests cannot pin records. Actions resolve the record through Filament's table query and record key, including tenant scopes; supplied argument IDs are ignored. Deleted or inaccessible records never appear. Search and filters still apply.
+
+Pins receive a subtle background and a pin indicator. Later pages prepend copies of pinned records absent from that page. These copies cannot be selected and do not change pagination totals, summaries or select-all records; original records remain in the normal query. During grouping, pins keep their indicator, but neither pin ordering nor copies are applied. Pin ordering and copies are also suspended during reordering.
+
+### Header filters
+
+Add an Excel-style funnel to selected column headings. Header filters use one real Filament filter named `warpHeader`, so existing filters, search and tenant scopes continue to apply. Date-time columns filter by calendar dates in the panel timezone (or the column timezone when set).
+
+```php
+use Filament\Tables\Columns\TextColumn;
+
+$table
+    ->warp()
+    ->columns([
+        TextColumn::make('category')->warpHeaderFilter(),
+        TextColumn::make('price')->numeric()->warpHeaderFilter(),
+        TextColumn::make('created_at')->date()->warpHeaderFilter(),
+        TextColumn::make('status')->warpHeaderFilter(options: [
+            'draft' => 'Draft',
+            'published' => 'Published',
+        ]),
+    ])
+    ->filters([/* your existing Filament filters */])
+    ->warpHeaderFilters();
+```
+
+`Column::warpHeaderFilter(string|Closure|null $type = null, array|Closure|null $options = null)` marks a column. Types are `values` (checkbox list), `range` (inclusive numeric bounds) and `dates` (inclusive calendar dates). When omitted, number inputs and numeric text columns infer `range`, date/date-time text columns infer `dates`, and other columns infer `values`. Options are a `[value => label]` array or a closure evaluated with the column's normal dependencies. Relationship columns using dot notation and calculated columns require explicit options. Relationship filters use `whereHas`; calculated states must still refer to queryable database attributes.
+
+Call `warpHeaderFilters()` **after `filters()`**, because Filament replaces filters in `filters()`. Columns may be defined before or after `warpHeaderFilters()`. Missing registration or overwritten filters produce an explanatory exception. A table without marked columns adds no visible filter or feature payload.
+
+Automatic value lists show each value as the column displays it (`formatStateUsing()`, enum labels), and so do the indicators; the stored value is used when a formatter needs the record. Values load only when opening the popover or searching its list, through the hidden `warpHeaderFilterOptions` action. Automatic lists use the filtered table query with only that column's own header filter excluded: other column filters, normal Filament filters, search and tenant constraints remain. The distinct query fetches at most 201 values, displays at most 200 and asks the user to narrow the search when more exist. Supplied options use the same display limit; scope any options-query closure to your tenant as you would for a normal Filament options closure. Rendering never fetches the automatic list. Blank selection includes SQL NULL and empty strings. Applying or clearing uses one `warpSetHeaderFilter` request, validates state, resets pagination and deselects records according to Filament settings. At most 500 values are accepted.
+
+State lives in `tableFilters.warpHeader.<column>` and its deferred counterpart. Filament's remove-all control and each column's removable indicator clear these filters; `persistFiltersInSession()` also restores them. With only header filters, the empty standard filter panel trigger is hidden. If other Filament filters exist their panel stays available. The popover supports keyboard navigation, Escape, outside-click dismissal and focus return.
+
+Tables using `records()` with array data are excluded: column marks are ignored. The native table fallback on narrow screens does not show header funnels; Filament filters and their indicators still apply. No extra feature script, payload keys or value-list queries are added to tables that do not use header filters.
+
+### Filtering with AI
+
+`WarpAiFilterAction` fills existing header filters from a sentence such as “published products under 5,000 created this month”. It is off by default: explicitly add the action to `headerActions` on a table with marked `->warpHeaderFilter()` columns and `->warpHeaderFilters()`. Tables without this action keep their existing HTML, payload, queries, assets and Livewire requests.
+
+```php
+use Qalainau\FilamentWarpTable\Actions\WarpAiFilterAction;
+
+$table->headerActions([
+    WarpAiFilterAction::make()->using(
+        fn (string $prompt, array $schema): array|string => $yourAiResolver($prompt, $schema),
+    ),
+]);
+
+// Alternatively, use Laravel HTTP (no AI SDK required):
+WarpAiFilterAction::make()->anthropic(config('services.anthropic.key'));
+WarpAiFilterAction::make()->openAi(config('services.openai.key'), 'your-model');
+WarpAiFilterAction::make()->openAi(config('services.ai.key'), 'your-model', 'https://your-gateway.example/v1');
+```
+
+The modal's note names where the text goes: `anthropic()` and `openAi()` set it to Anthropic and OpenAI; with `using()`, it says "your AI provider" (translated) unless you name it with `->provider('Acme AI')`. `anthropic()` defaults to `claude-haiku-5-5`. Built-in requests time out after 20 seconds; keys are sent only in headers. Configure keys in your application's secret configuration. A missing resolver produces an explanatory exception when opening the action. Provider failures show a notification and preserve the current filters.
+
+The plugin builds an English prompt and accepts user text in English or Japanese. The resolver receives the complete prompt and a schema and returns an array or JSON string shaped as:
+
+```json
+{"filters":{"status":{"values":["Published"]},"price":{"max":4999},"created_at":{"from":"2026-11-01","until":"2026-11-30"}},"clear":["category"]}
+```
+
+Only marked columns and fields matching their type are accepted: `values` / boolean `blanks`, numeric `min` / `max`, or date `from` / `until`. Values must match labels in the list sent to the provider; supplied option labels map back to their underlying filter values. Unknown columns, values and invalid fields are discarded. AI only fills values and never writes SQL. Applied filters appear in Filament's removable indicators and reset pagination. If nothing can be applied, a notification appears and existing filters stay unchanged.
+
+Data sent to the provider:
+
+- Each marked column's name, label and type (`values`, `range` or `dates`).
+- For `values` columns, the supplied `$options` labels, or up to 100 distinct values from the table query, including tenant constraints. Lists are capped at 100. Scope supplied options closures to the tenant, as for ordinary header filters.
+- Today's date in the panel's Filament timezone.
+- The user's sentence (at most 500 characters).
+
+Record rows, other columns' values, and the user's name or email are not sent. The modal displays a disclosure of the provider and data sent. `->sendValues(false)` omits all value lists and sends column labels/types/names, today's date and the sentence; without a list, AI cannot select values (blank selection, ranges, dates and clearing still work). Any sensitive information typed into the sentence is part of that sentence.
+
+Normal Filament action authorization and visibility apply. Requests are limited to 10 per user per minute across tables (guests share the limit within their session). No AI requests happen until the user submits the modal.
+
+### Row details
+
+Use row details to show secondary information beneath a record without adding more columns:
+
+```php
+use Illuminate\Database\Eloquent\Model;
+
+$table
+    ->warp()
+    ->warpRowDetail(
+        fn (Model $record) => view('products.detail', ['record' => $record]),
+        condition: true,
+    );
+```
+
+`warpRowDetail(Closure $content, bool|Closure $condition = true)` adds a narrow toggle column after the selection checkbox and before your columns. Click the arrow or press Enter or Space to expand it. The content closure receives the resolved record and returns a Blade View, an `Htmlable`, or a string. Strings are escaped; Views and `Htmlable` provide HTML, so use Blade escaping for untrusted values.
+
+Opening an uncached record makes one Livewire request through the hidden `warpRowDetail` action, without rendering the table again. HTML is cached in the browser by record key. A changed row payload invalidates it and reloads an open detail. Expansion survives sorting and Livewire redraws while that key remains; changing the pagination page closes details. The measured band follows the viewport width when scrolling horizontally, and height changes (including image loads) reposition subsequent rows and summaries.
+
+Content supports read-only HTML and links. Livewire components, forms, `wire:` attributes and interactive Alpine components inside it are unsupported. Record resolution uses Filament's table query, filters and tenant scope; inaccessible or missing records return no content. Scope your table query to records the user may view, and authorize sensitive fields inside your content closure as you would in any other View. A false condition disables the feature. Details are unavailable with `warpMultiLevel()` and when the table falls back to Filament's native table on narrow screens.
+
+### Reserved action names
+
+`warpAiFilter` is reserved for the AI header action.
+
+`warpPin` is reserved for the pinned-row record action.
+
+`warpHeader` is reserved for the header filter. `warpHeaderFilterOptions` and `warpSetHeaderFilter` are reserved internal table actions.
+
+`warpEntryRow`, `warpSaveColumnWidths` and `warpRowDetail` are internal table actions. Do not give your own actions names starting with `warp`; that prefix is reserved for Warp Table features.
+
 ## Selecting and copying cells
 
 Rows on a canvas cannot be selected like text, and even in the native table, selecting text across rows copies a jumble of labels instead of cells. `warpCellSelection()` makes the records area work like a spreadsheet range instead:
@@ -263,6 +431,31 @@ $table
 - Cells are copied as they are shown: the text of text columns (without descriptions), the value of text inputs, the label of select options, `TRUE` / `FALSE` for toggles and checkboxes, the tooltip of icons, the URL of images, the color of color columns and the text of other columns. Rows of collapsed groups are skipped.
 - The range is kept across Livewire updates, for example after editing a cell or hiding another column, as long as its records and columns are still on the page. It works with `warpFrozenColumns()`, `warpStickyHeader()` and `warpHeight()`.
 - While the option is on, links in the rows can no longer be dragged to the browser's tab bar, because dragging selects cells. It is not available for multi-level rows.
+
+## Pasting from a spreadsheet
+
+For small edits copied from Excel or Google Sheets, enable pasting separately from copying:
+
+```php
+$table
+    ->columns([
+        TextInputColumn::make('price')->rules(['required', 'numeric', 'min:0']),
+        SelectColumn::make('status')->options(['draft' => 'Draft', 'published' => 'Published']),
+        ToggleColumn::make('is_active'),
+    ])
+    ->warp()
+    ->warpPaste(maxCells: 200);
+```
+
+`warpPaste(bool|Closure $condition = true, int|Closure $maxCells = 200)` automatically enables cell selection when active. `warpCellSelection()` alone still only selects and copies; it does not enable pasting. The paste module is loaded only for tables that enable it. Multi-level rows are not supported.
+
+Select a cell or drag a range, focus the table and press Ctrl/Cmd+V. Tab-separated `text/plain` supports quoted tabs, newlines and escaped quotes. Values start at the selection's top-left. A single value fills the whole selected range; a smaller source rectangle repeats across a larger selection. Ctrl/Cmd+D copies the selection's first row into the rows below it. Input editors retain their normal paste and keyboard behavior.
+
+Only `TextInputColumn`, `SelectColumn`, `ToggleColumn` and `CheckboxColumn` receive values. Read-only cells, disabled rows, collapsed rows and unmatched options are skipped and counted in one final Filament notification. Hidden columns keep their destination slots and are skipped and counted without receiving values. Selects match option values first, then labels, without case sensitivity, using the options available for that cell. Toggles and checkboxes accept `1` / `0`, `true` / `false`, `yes` / `no` and `はい` / `いいえ`, regardless of letter case.
+
+Each cell saves sequentially through Filament's existing `updateTableColumnState`, with the same column validation, disabled/permission checks and tenant-scoped record resolution as inline editing. Configure permission restrictions on editable columns as usual. Each saving cell uses the usual pending indicator; validation errors keep the usual cell error indicator and message. Changes are immediate and partial successes remain saved if another cell fails. There is no Ctrl+Z or undo.
+
+The default limit is 200 destination cells, including skipped cells, with a hard maximum of 1,000. A paste over the limit saves nothing. Values beyond the current page or last visible column are skipped; pasting never creates records. Use Warp Sheet for large editing sessions and spreadsheet workflows; this option is intended for small updates to existing table records.
 
 ## Entry row
 
@@ -764,7 +957,7 @@ The other table features of Warp plugins work on a `->warp()` table as well:
 
 ## JavaScript integration
 
-Scalar `data-warp-*` attributes from a column's `extraAttributes()` are evaluated for each record and included as strings in the cell's `wa` payload. Other attributes are excluded. The table keeps an ordered, hidden `.fi-warp-tbl-marks` list inside `.fi-ta`, with a span for every attributed cell. Each span also has `data-warp-table-row` (the record key) and `data-warp-table-column` (the column name). A transparent `.fi-warp-tbl-cell-mark` carries the current cell's attributes under the pointer and on keyboard activation, so delegated event listeners can handle the cell.
+Scalar `data-warp-*` attributes from a column's `extraAttributes()` are evaluated for each record and included as strings in the cell's `wa` payload. Other attributes are excluded. The table keeps an ordered, hidden `.fi-warp-tbl-marks` list inside `.fi-ta`, with a span for every attributed cell. Each span also has `data-warp-table-row` (the record key) and `data-warp-table-column` (the column name). A transparent `.fi-warp-tbl-cell-mark` carries the current cell's attributes under the pointer and on keyboard activation, so delegated event listeners can handle the cell. The proxy does not take the table's own controls away: a left press or drag still starts cell selection and focuses the table, and a click on an inline input, select, toggle, checkbox, copy button or row action goes to that control (your delegated `click` listener is not called for it). Right-clicks and clicks on links or plain cells reach your listeners as before. This is why Warp Context Menu, which adds `data-warp-context-menu-column` to every column, works with inline editing.
 
 Use `data-warp-table-decoration="dotted-underline"` to draw a dotted underline under the cell's text. It becomes solid while the pointer is over the cell proxy. This marker is available to any integration:
 
@@ -808,3 +1001,47 @@ The highlight of `markRow()` is a light primary colour with a 3px primary line o
 ```
 
 The root emits bubbling `warp-table:rows-changed` after a payload changes, and `warp-table:focus-row` with detail `{ key }` when keyboard focus moves to a different row. Livewire can replace the root, so look up its current API again after a redraw.
+
+
+## Exporting to Excel
+
+Add `WarpExportAction` to a table's `headerActions()` or `toolbarActions()` to download the table as it is displayed. Tables without this action keep their existing behavior and assets.
+
+```php
+use Qalainau\FilamentWarpTable\Actions\WarpExportAction;
+
+$table->headerActions([
+    WarpExportAction::make()
+        ->askScope()
+        ->maxRows(50000)
+        ->fileName(fn () => 'products'),
+]);
+```
+
+The default action name is `warpExport`. The default scope is `all`: all filtered and searched rows in the current sort order. Use `->scope('page')` for the current page, or `->askScope()` to let the user choose. `->maxRows()` limits data rows (50,000 by default); exceeding the limit shows a notification without downloading a partial file. The default filename uses the table heading (or `export`) and the current time in the panel timezone. `->fileName(string|Closure)` overrides it. Use `->csv()` to download CSV instead.
+
+XLSX includes visible columns in screen order, merged two-level column group headings, frozen heading rows, formatted text and option labels, typed numbers and dates, group headings, subtotals, table summaries, and an outline for grouped records. Subtotals and summaries are written as the text shown on screen (for example `Sum ¥28,276,187`), so they match the table exactly but are not recalculated by Excel. Images and icons fall back to their textual placeholder. CSV contains the same values without spreadsheet styles, merges or outlines.
+
+Excel downloads need PHP's `ext-zip` extension. It is suggested, never required: if unavailable, Excel shows an actionable notification and CSV still works. Rows are read in lazy batches, and worksheet XML is written to a temporary file.
+
+Normal Filament Action permissions apply: use `->visible()` and `->authorize()` as usual. Export reads only the table's query, preserving filters and tenant scopes. XLSX text is always written as text, never as a formula. CSV prefixes formula-like text (including text such as `-1`) with an apostrophe; typed numeric values remain numbers.
+
+Filament's `ExportAction` provides queued exports with configured exporter classes and columns. `WarpExportAction` provides an immediate download of the current table configuration, including its visible columns, labels, grouping and summaries, without an exporter class or queue worker.
+
+## Infinite scrolling
+
+Use infinite scrolling to browse a long table without changing pages:
+
+```php
+$table->warp()->warpInfiniteScroll(chunk: 100, max: 2000);
+```
+
+`chunk` (default `100`), `max` (default `2000`), and `condition` (default `true`) accept closures. Use `1 <= chunk <= max <= 10000`. The first render always starts at `chunk`, including when Filament persists the page size in the session.
+
+Scrolling within 1.5 viewport heights of the end doubles Filament's `tableRecordsPerPage` (100 → 200 → 400 …). This works with `warpHeight()` and page scrolling. The existing rows are rendered again by Filament; rows are not appended in JavaScript. Scroll position survives the usual Warp handoff. Loading shows an indicator and prevents duplicate requests.
+
+Automatic loading stops before the next doubling would exceed `max`. If `max` is not a doubling of `chunk`, the last automatic size is the largest doubling below `max`. A **Load :count more rows** button allows one further doubling per click beyond that limit. Only `chunk × 2ⁿ` sizes up to 10,000 are accepted by the server; once no further doubling fits, narrow the search to see more records.
+
+The Filament pagination footer is hidden only on this table. Progress shows the loaded and total row counts, then **Showing all :total rows**. Simple pagination shows only the loaded count because it has no total. Cursor pagination and `enforcePaginationPageOptions()` are unsupported and raise descriptive exceptions. Pagination must remain enabled.
+
+Filtering, searching, sorting, and changing groups reset the size to `chunk`. Selection (including select all), grouping, and summaries use Filament's normal behavior. **Select this page** selects all currently loaded rows; page summaries cover the loaded page.

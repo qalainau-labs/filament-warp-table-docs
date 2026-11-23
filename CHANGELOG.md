@@ -5,7 +5,32 @@ All notable changes to `qalainau/filament-warp-table` will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.6.0] - 2026-11-23
+
+### Added
+- Add opt-in `warpInfiniteScroll()` with geometric page growth, loading progress, manual loading beyond the automatic limit, and server-side size validation.
+
+
+- Opt-in `warpPaste()` for Excel/Google Sheets pasting and Ctrl/Cmd+D fill down into editable cells, using existing inline validation and tenant scoping, with cell limits and a single result notification.
+
+- Opt-in `warpRowDetail()` for lazy, tenant-scoped read-only detail bands with accessible toggles, measured heights, browser caching and expansion preserved across redraws.
+
+- Add opt-in `WarpExportAction` for Excel and CSV downloads of visible table columns, groups and summaries, with scope selection, row limits and tenant-scoped queries.
+
+- Opt-in `WarpAiFilterAction` for natural-language header filtering, with custom resolvers or Laravel HTTP adapters for Anthropic and OpenAI, validated values, tenant-scoped lists, provider disclosure and per-user rate limits.
+
+- Opt-in Excel-style header filters with `Column::warpHeaderFilter()` and `warpHeaderFilters()`: searchable value lists, blank selection, numeric ranges and date periods, with Filament indicators, clearing, session persistence and tenant-scoped lazy options.
+
+- Opt-in `warpPinnedRows()` with per-user, per-table and per-tenant pins, automatic `WarpPinAction`, and non-selectable pinned copies on later pages.
+
+- Opt-in end-frozen columns with `warpFrozenEndColumns()`, including trailing row actions, sticky headers, summaries and input rows.
+
+- Opt-in `warpResizableColumns()` for dragging column widths and double-clicking to restore automatic sizing, with per-user and per-tenant database preferences or browser storage for guests. Includes the optional preferences migration, `warpPreferencesKey()`, hidden action registration and feature JavaScript loaded only by tables that enable it.
+
+### Fixed
+
+- **Inline editing and cell selection with Warp Context Menu**: in a panel with Warp Context Menu, clicking an editable cell (text input, select, toggle, checkbox) did nothing and dragging did not select cells (and after a Shift+click that extended the range, Cmd/Ctrl+A and Escape did nothing), because the transparent cell mark that carries `data-warp-*` attributes took the click. Left clicks and drags now reach the table; right-clicks and delegated listeners (Quick Look, Split View) still see the attributes.
+- **Summaries on Filament 5.12**: tables with page or all-records summaries ran each `sum()` query twice (and the grouped summary query even when no group ends on the page). Warp Table now runs the same summary queries as the standard Filament table on 5.10, 5.11 and 5.12.
 
 ## [1.5.1] - 2026-11-19
 
