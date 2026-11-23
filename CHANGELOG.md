@@ -5,6 +5,11 @@ All notable changes to `qalainau/filament-warp-table` will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2026-11-23
+
+### Fixed
+- The `warp_table_preferences` table (column widths and pinned rows) now has the same two tenant columns as the other Warp plugins, `tenant_type` and `tenant_id`, so tenant data tools can tell which tenant a row belongs to, and two tenant models with the same key no longer share saved widths and pins. Publish and run the new migration `add_tenant_type_to_warp_table_preferences_table` (`php artisan vendor:publish --tag=filament-warp-table-migrations` and `php artisan migrate`). It renames `tenant_key` to `tenant_id` and keeps every saved row. Until it runs, Warp Table keeps using the 1.6.0 columns.
+
 ## [1.6.0] - 2026-11-23
 
 ### Added

@@ -271,14 +271,16 @@ $table
 
 Both `condition` and `remember` accept booleans or closures and default to `true`. With `remember: false`, widths last for the current table view and reset on a page reload. With remembering enabled, signed-in users save widths in the database, separately for each user, tenant and table. Guests use their browser's localStorage instead. The default table key is the Livewire class name, plus the relationship name for a relation manager; `warpPreferencesKey()` overrides it.
 
-Publish and run the optional migration before enabling database persistence:
+Publish and run the optional migrations before enabling database persistence:
 
 ```sh
 php artisan vendor:publish --tag=filament-warp-table-migrations
 php artisan migrate
 ```
 
-Migrations never run automatically. A missing preferences table produces an error with these commands only when a signed-in table uses persistence. Tables without resizing do not read preferences or load the resizing JavaScript. No tenant is stored as an empty string, so the database enforces uniqueness consistently.
+This publishes two migrations, which run in order: `add_warp_table_preferences_table` creates the `warp_table_preferences` table, and `add_tenant_type_to_warp_table_preferences_table` (1.6.1) gives it the same two tenant columns as the other Warp plugins, `tenant_type` and `tenant_id`. If you published the migration with 1.6.0, run the same two commands again after updating: only the new migration is published. Until it runs, Warp Table keeps reading and writing the 1.6.0 columns. The new migration keeps every saved width and pin. When your panels use a single tenant model, it also fills in the tenant type of the existing rows; with several tenant models, rows saved by 1.6.0 stay readable for the tenant with that key until the user saves again.
+
+Migrations never run automatically. A missing preferences table produces an error with these commands only when a signed-in table uses persistence. Tables without resizing do not read preferences or load the resizing JavaScript. No tenant is stored as empty strings in both tenant columns, so the database enforces uniqueness consistently.
 
 Only ordinary data columns can be resized. Selection checkboxes, record action columns, multi-level tables and the native table fallback are excluded. Widths are stored as pixels by column name. The server discards unknown or hidden columns and nonnumeric values, converts numeric values to integers, clamps them to 48–1600px, and accepts at most 200 overrides. Resetting a column removes its saved override. Saving happens once when dragging ends and skips the Livewire render; an open action modal defers the save until it closes.
 
@@ -293,7 +295,7 @@ $table->warpPinnedRows(condition: fn () => true, max: 20);
 
 `condition` accepts a boolean or closure (default `true`); `max` accepts an integer or closure (default `20`). New pins are saved first and the oldest pins are dropped when the limit is reached. Pinned rows are listed in that order: the latest pin first. The **Pin to top** / **Unpin** record action is appended automatically, regardless of whether `recordActions()` is called before or after `warpPinnedRows()`. You may place `Qalainau\FilamentWarpTable\Actions\WarpPinAction::make()` yourself, including inside an action group; it will not be added twice.
 
-Preferences use the optional `warp_table_preferences` table, with kind `pinned_rows`, scoped by user, table and tenant. Publish and run its migration (the same migration used for column widths):
+Preferences use the optional `warp_table_preferences` table, with kind `pinned_rows`, scoped by user, table and tenant. Publish and run its migrations (the same two migrations used for column widths, see [Resizing columns](#resizing-columns)):
 
 ```bash
 php artisan vendor:publish --tag=filament-warp-table-migrations
