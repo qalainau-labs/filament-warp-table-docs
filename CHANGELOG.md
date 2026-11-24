@@ -5,6 +5,14 @@ All notable changes to `qalainau/filament-warp-table` will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [1.6.2] - 2026-11-24
+
+### Changed
+- `warpPaste()` toggle and checkbox cells also read yes / no in all ten table languages (`ja` / `nein`, `oui` / `non`, `sí` / `no`, `sim` / `não`, `예` / `아니요`, `是` / `否` and more) and the TRUE / FALSE of German, French, Spanish, Italian and Portuguese Excel (`WAHR` / `FALSCH`, `VRAI` / `FAUX`, `VERDADERO` / `FALSO`, `VERO` / `FALSO`, `VERDADEIRO` / `FALSO`), regardless of letter case. Values that were read before are read the same way.
+- The AI filter disclosure in Japanese, Korean and Simplified and Traditional Chinese names the destination after a colon, without spaces around it.
+
 ## [1.6.1] - 2026-11-23
 
 ### Fixed
