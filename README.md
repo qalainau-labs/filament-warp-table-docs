@@ -242,7 +242,7 @@ $table
 - A thin shadow marks the edge while the table is scrolled sideways. The header row, group headers, group checkboxes and summary rows stay aligned with the frozen columns, and group titles and their collapse buttons stay in view.
 - Clicking, links, inline editing and the dropdowns work in the frozen columns as usual. Tab and Shift+Tab scroll the table sideways to the focused cell, so a field never ends up hidden under the frozen columns.
 - Works together with `warpStickyHeader()` and `warpHeight()`.
-- Nothing is frozen when the table fits the page, when the frozen columns would take more than two thirds of the visible width (on small screens), and for multi-level rows. It accepts a closure too.
+- Nothing is frozen when the table fits the page, when the frozen columns would take more than two thirds of the width the table is shown in (on small screens, or in a narrow box such as a Split View pane or a modal), and for multi-level rows. It accepts a closure too.
 
 The native table has no equivalent, so when Warp Table falls back to the native table (see *Automatic fallback*), the columns simply scroll.
 
@@ -256,7 +256,16 @@ $table
 
 The first argument counts user columns from the end of the visible order (default `0`, negative values become `0`). The second argument, `actions` (default `true`), also freezes the row actions when their position is `AfterColumns` or `AfterCells`. Call `->warpFrozenEndColumns()` with no arguments to freeze only those actions, or `->warpFrozenEndColumns(1, actions: false)` to freeze only the last user column. Both arguments accept closures. Without this call, nothing is frozen at the right edge.
 
-The right boundary casts a light shadow only while more content is hidden toward the right. Headers, sticky headers, summaries, column searches and the entry row follow the frozen columns. Start and end freezing together must fit within two thirds of the viewport; start freezing takes priority and end columns are dropped from the right when the limit is exceeded. Tables that fit the viewport, multi-level layouts and the native table on narrow screens do not freeze end columns.
+The right boundary casts a light shadow only while more content is hidden toward the right. Headers, sticky headers, summaries, column searches and the entry row follow the frozen columns.
+
+How much may be frozen:
+
+- Start and end freezing together may take up to two thirds of the width the table is shown in. That is the table's own visible width, not the browser window: inside a Warp Split View list pane, a modal, a slide-over or a narrow grid column, the two thirds are measured on that box.
+- Start freezing takes priority. When the limit is exceeded, end columns are dropped starting from the one nearest the scrolling area, so the row actions (the outermost) stay frozen longest.
+- The limit is measured again whenever the box changes width: resizing the window, dragging the Split View divider, or opening and closing a sidebar.
+- Tables that fit their box, multi-level layouts and the native table on narrow screens do not freeze end columns.
+
+In a narrow box, row actions with text labels can take most of the two thirds on their own. For example, in a 385 px Split View pane up to about 256 px may be frozen, and three text buttons (about 230 px) fit, leaving roughly 150 px for the scrolling columns. To keep more of the record visible there, show the actions as icon buttons (`->iconButton()` with a `->tooltip()`), or freeze only your columns with `->warpFrozenEndColumns(1, actions: false)`.
 
 ## Resizing columns
 
@@ -357,7 +366,7 @@ WarpAiFilterAction::make()->openAi(config('services.openai.key'), 'your-model');
 WarpAiFilterAction::make()->openAi(config('services.ai.key'), 'your-model', 'https://your-gateway.example/v1');
 ```
 
-The modal's note names where the text goes: `anthropic()` and `openAi()` set it to Anthropic and OpenAI; with `using()`, it says "your AI provider" (translated) unless you name it with `->provider('Acme AI')`. `anthropic()` defaults to `claude-haiku-5-5`. Built-in requests time out after 20 seconds; keys are sent only in headers. Configure keys in your application's secret configuration. A missing resolver produces an explanatory exception when opening the action. Provider failures show a notification and preserve the current filters.
+The modal's note names where the text goes: `anthropic()` and `openAi()` set it to Anthropic and OpenAI; with `using()`, it says "your AI provider" (translated) unless you name it with `->provider('Acme AI')`. `anthropic()` defaults to `claude-haiku-5-5`. Built-in requests time out after 20 seconds; keys are sent only in headers. Configure keys in your application's secret configuration. When neither a resolver nor `warp.ai` is available, opening the action produces the same explanatory exception. Provider failures show a notification and preserve the current filters.
 
 The plugin builds an English prompt and accepts user text in English or Japanese. The resolver receives the complete prompt and a schema and returns an array or JSON string shaped as:
 
@@ -376,7 +385,63 @@ Data sent to the provider:
 
 Record rows, other columns' values, and the user's name or email are not sent. The modal displays a disclosure of the provider and data sent. `->sendValues(false)` omits all value lists and sends column labels/types/names, today's date and the sentence; without a list, AI cannot select values (blank selection, ranges, dates and clearing still work). Any sensitive information typed into the sentence is part of that sentence.
 
-Normal Filament action authorization and visibility apply. Requests are limited to 10 per user per minute across tables (guests share the limit within their session). No AI requests happen until the user submits the modal.
+Normal Filament action authorization and visibility apply. Explicit resolvers are limited to 10 requests per user per minute across tables (guests share the limit within their session). Gateway requests are counted and limited by the gateway, without a second plugin limit. No AI requests happen until the user submits the modal.
+
+#### Which AI service is used
+
+`WarpAiFilterAction` uses the first available source:
+
+1. **An explicit `using()`, `anthropic()` or `openAi()`**: your existing resolver or HTTP adapter always takes precedence, even when a gateway is bound.
+2. **An AI gateway bound to `warp.ai`**: [Warp SaaS](https://warpui.com) binds one for you and chooses the model, counts requests per company, person and feature, and enforces plan limits. Without Warp SaaS, write your own gateway (below).
+3. **Neither**: the action keeps its existing appearance and throws the explanatory configuration exception when opened. The action is never added automatically.
+
+With a gateway, add the action without a resolver. `aiFeature()` optionally names the usage meter; without it, the gateway counts `table.filter`. It accepts a string or closure; empty names are ignored. Existing resolvers ignore this setting.
+
+```php
+$table->headerActions([
+    WarpAiFilterAction::make()->aiFeature('product_search'),
+]);
+```
+
+Before enabling the button, the action asks `unavailable()` once per Action object, including when the answer is `null`. A sentence disables the button and becomes its tooltip. Direct mount and submit calls are also refused with that sentence. If `ask()` throws an exception with a nonempty `userMessage()`, the user sees that sentence (trimmed and limited to 300 characters); otherwise, a translated failure notification appears and the exception is reported. Existing filters stay unchanged on failure.
+
+The gateway receives the column information and sentence listed above, with instructions separate from the user's input and a JSON schema for `filters` and `clear`. Nullable entries mean “no suggestion”; `clear` explicitly removes a column's filter. Responses go through the same column, option, number and date checks as existing resolvers. `sendValues(false)` omits lists from both instructions and schema enums and prevents selecting unsent values. The gateway also receives the current Filament tenant, authenticated user and app locale to authorize and count usage; it decides which context to pass to the external AI provider. The modal names “the AI service this app uses”, or your explicit `provider('…')` label.
+
+**Writing your own gateway.** This example uses Laravel's HTTP client with structured output, as in Warp Input. Put the class in `app/Ai/AiGateway.php` (namespace `App\Ai`) and choose the provider and models in your app:
+
+```php
+use Illuminate\Support\Facades\Http;
+use RuntimeException;
+
+class AiGateway
+{
+    public function ask(array $request): array
+    {
+        $response = Http::timeout(90)
+            ->withHeaders(['x-api-key' => config('services.anthropic.key'), 'anthropic-version' => '2023-06-01'])
+            ->post('https://api.anthropic.com/v1/messages', [
+                'model' => $request['tier'] === 'smart' ? 'claude-sonnet-5-5' : 'claude-haiku-5-5',
+                'max_tokens' => $request['max_output_tokens'] ?? 2000,
+                'system' => $request['instructions'],
+                'output_config' => ['format' => ['type' => 'json_schema', 'schema' => $request['schema']]],
+                'messages' => [['role' => 'user', 'content' => $request['input']]],
+            ])
+            ->throw();
+
+        $text = collect($response->json('content'))->firstWhere('type', 'text')['text'] ?? '';
+        $data = json_decode($text, true);
+
+        return is_array($data) ? ['data' => $data] : throw new RuntimeException('No answer.');
+    }
+}
+
+// app/Providers/AppServiceProvider.php, in register()
+$this->app->singleton('warp.ai', \App\Ai\AiGateway::class);
+```
+
+Optionally add `unavailable(array $request): ?string` (a sentence to disable, `null` to allow). Exceptions may provide `userMessage(): string` to show a safe refusal. The plugin does not depend on an AI SDK or another Warp plugin.
+
+**Moving from direct HTTP adapters.** `anthropic()` and `openAi()` are deprecated: they keep working in 1.x and will be removed in 2.0. Bind `warp.ai` and remove the explicit adapter call so the action uses your gateway. A custom `using()` remains supported and still wins; replace a resolver that only counts usage with `aiFeature('…')` once your gateway counts it. Existing HTTP request bodies, disclosure text and HTML without a gateway are unchanged.
 
 ### Row details
 

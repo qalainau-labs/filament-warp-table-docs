@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-25
+
+### Added
+- **AI header filters through a shared AI gateway**: `WarpAiFilterAction::make()` uses `warp.ai` when no explicit resolver is configured. The gateway receives a structured filter schema, chooses the model and owns usage limits. Name a meter with `aiFeature('product_search')`. Unavailable features are disabled with the gateway's sentence as a tooltip, and safe refusal messages appear as notifications. Explicit resolvers, HTTP request bodies and the interface without a gateway are unchanged. See [Which AI service is used](README.md#which-ai-service-is-used).
+
+### Deprecated
+- `WarpAiFilterAction::anthropic()` and `openAi()` keep working in 1.x and will be removed in 2.0. Bind an AI gateway to `warp.ai` and remove the explicit adapter call instead.
+
+### Docs
+- The frozen columns section now says that the two-thirds limit for `warpFrozenColumns()` and `warpFrozenEndColumns()` is measured on the width the table is shown in (a Split View pane, a modal, a narrow grid column), not the browser window, that it is measured again when that width changes, and which end column is dropped first. It also shows how to keep text row actions from filling a narrow pane. Behavior is unchanged.
+
 ## [1.6.2] - 2026-11-24
 
 ### Changed
