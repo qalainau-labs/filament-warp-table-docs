@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-11-26
+
+### Fixed
+
+- **Column header filters show with `warpHeight()`**: on a table with a fixed height, the filter buttons in the column headings were all hidden. They now show in the headings and stay with them while the table or the page scrolls.
+
 ## [1.7.0] - 2026-11-25
 
 ### Added
