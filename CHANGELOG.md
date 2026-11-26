@@ -5,7 +5,17 @@ All notable changes to `qalainau/filament-warp-table` will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.7.2] - 2026-11-26
+
+### Changed
+
+- **Date header filters can use the column's index**: a date range in a column heading is now compared as `column >= first day` and `column < the day after the last day`, instead of wrapping the column in a date function. On MySQL and other databases an index on the date column now speeds up the filter. The rows that match are the same, including the whole last day for datetime columns shown with `->date()`.
+- **The AI filter's "can't be used now" sentence is readable on phones**: when a `warp.ai` gateway says the AI filter can't be used now, its sentence now also appears as a small, muted line under the disabled button (it was only in the tooltip, which phones can't show). Screen readers read it as the button's description. Nothing changes while the gateway allows the feature, without a gateway, or with your own `using()` resolver.
+
+### Fixed
+
+- **The AI filter works on tables with six or more filter columns**: through a `warp.ai` gateway, a real AI model refused the request ("too many parameters with union types") as soon as six columns had header filters, so the button showed the generic failure. The answer format sent to the gateway no longer uses `null` types: an empty list, `false` or an empty string now means “no suggestion”, and range bounds come back as numbers written as text. The filters that get filled in are unchanged. Your own `using()` resolvers and the deprecated `anthropic()`/`openAi()` calls are unchanged.
+- **Number header filters with decimals work on PostgreSQL**: on PostgreSQL, a number range with a decimal such as `10.5` (or `20.0`) on an integer column, typed in the heading or suggested by the AI filter, stopped the table with a database error ("invalid input syntax for type integer"). Whole numbers are now compared as integers, so an index on the column is still used, and other numbers are compared as decimals. MySQL, MariaDB and SQLite already worked and are unchanged.
 
 ## [1.7.1] - 2026-11-26
 
