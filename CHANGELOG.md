@@ -5,6 +5,14 @@ All notable changes to `qalainau/filament-warp-table` will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.3] - 2026-11-28
+
+### Fixed
+
+- **Columns that your panel's CSS hides no longer take space or squeeze other columns**: when a column's header is hidden by CSS, as Warp Mobile's `swipeActions()` column is on wide screens, the table showed it as an empty column and stopped measuring column widths the way Filament does. Short columns such as `->date('n/j')` came out a little too narrow and were cut ("11…"). Such columns are now left out, like in Filament's own table, and the widths match it again. Tables with a fixed `rowHeight()` also keep the wider padding of the first and last cells, so their text is no longer cut by it.
+- **Wrapped descriptions get their full height**: in a column with `->description(...)->wrap()`, a description that wraps onto two or more lines was drawn in a row only one line taller, so its last line was cut off at the bottom. Rows are now as tall as in Filament's own table.
+- **No faint lines next to columns frozen with `warpFrozenEndColumns()`**: badges or text scrolled underneath the columns frozen on the right could show through as a thin line between two frozen columns or at the table's right edge. The frozen area is now painted as one block.
+
 ## [1.7.2] - 2026-11-26
 
 ### Changed
