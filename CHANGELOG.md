@@ -5,6 +5,12 @@ All notable changes to `qalainau/filament-warp-table` will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.4] - 2026-11-28
+
+### Fixed
+
+- **Text is no longer cut by a few pixels when your theme names a Japanese font**: with a panel font such as `font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', …` (instead of Filament's default Inter), Chrome measures katakana a little narrower in HTML than it draws it on the table's canvas. Columns got the HTML width, so a value or a heading that fits in Filament's own table ended in "…" (「アクリルグッズ…」), also in tables that scroll sideways. A column is now made the few pixels wider that its text needs. In a table that fits its container, those pixels are taken from columns with room to spare, so no scrollbar appears. Columns with `->width()`, wrapped columns, badge columns and columns narrowed by your own CSS keep their width, and tables whose text already fits are unchanged.
+
 ## [1.7.3] - 2026-11-28
 
 ### Fixed

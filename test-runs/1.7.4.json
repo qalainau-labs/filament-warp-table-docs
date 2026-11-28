@@ -1,0 +1,33 @@
+{
+    "version": "1.7.4",
+    "scope": "light",
+    "since": "v1.7.3（713afaea6）",
+    "browser": {
+        "scope": "changed",
+        "scripts": 35,
+        "total": 42,
+        "since": "1.7.3"
+    },
+    "tested_on": "2026-11-28",
+    "combinations": 2,
+    "passed": 2,
+    "tests": 419,
+    "php": [
+        "8.3",
+        "8.5"
+    ],
+    "laravel": [
+        "12",
+        "13"
+    ],
+    "databases": [
+        "SQLite 3.45.2",
+        "MySQL ",
+        "MySQL ",
+        "MariaDB ",
+        "MariaDB ",
+        "PostgreSQL ",
+        "PostgreSQL "
+    ],
+    "lowest": null
+}
