@@ -5,6 +5,14 @@ All notable changes to `qalainau/filament-warp-table` will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.5] - 2026-11-28
+
+### Fixed
+
+- **Pasting into toggle and checkbox columns reads full-width values**: values typed with a Japanese input method, such as `ＹＥＳ`, `ＴＲＵＥ`, `ＦＡＬＳＥ`, `１` and `０`, were skipped as unmatched. They are now read like `yes`, `true`, `false`, `1` and `0`. Every value that was read before gives the same result, and select columns still match options exactly as before.
+- **A second paste while the first is still saving is no longer lost**: pasting another range (or pressing Ctrl/Cmd+D) while the cells of the previous paste were still saving did nothing, with no notification. The new paste now waits and is applied to the range that was selected when you pasted it, right after the previous paste has finished, with its own notification. A single paste behaves exactly as before.
+- **Saves whose reply never arrives are reported instead of looking saved**: when Livewire dropped the reply of an inline save (a toggle, a checkbox, an input, a select or a pasted cell), the cell was treated as saved. The table still reloads to show what is saved, and now also shows "We couldn't confirm that your change was saved. The table was reloaded to show what is saved." A paste counts these cells separately ("… cells could not be confirmed as saved."), and an input that is still open is closed so that it shows the reloaded value. Nothing is sent again.
+
 ## [1.7.4] - 2026-11-28
 
 ### Fixed
